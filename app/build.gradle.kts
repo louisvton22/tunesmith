@@ -9,12 +9,16 @@ android {
 
     defaultConfig {
         applicationId = "edu.ischool.lton2.tunesmith"
+
         minSdk = 28
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["redirectHostName"] = "developer.android.com"
+        manifestPlaceholders["redirectSchemeName"] = "https"
     }
 
     buildTypes {
@@ -33,6 +37,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
 }
 
 dependencies {
@@ -43,6 +48,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.code.gson:gson:2.6.1")
     implementation(files("../app-remote-lib/spotify-app-remote-release-0.8.0.aar"))
+    implementation(files("../auth-lib/spotify-auth-store-release-2.1.0.aar"))
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
