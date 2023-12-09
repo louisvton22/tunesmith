@@ -39,10 +39,11 @@ class MainActivity : AppCompatActivity() {
 
     //private var spotifyAppRemote: SpotifyAppRemote? = null
     private val mainActivity = this
+    lateinit var spotifyConnection: SpotifyConnection
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        spotifyConnection = (application as SpotifyConnection)
     }
 
     override fun onStart() {
@@ -82,20 +83,33 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            else -> {
+                alert.setMessage("Spotify not installed. Please downlaod from the Play Store")
+                alert.setPositiveButton("Go") { dialog, which ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music")
+                    startActivity(intent)
+                    dialog.dismiss()
+                }
+                alert.setNegativeButton("Cancel") {dialog, which ->
+                    dialog.dismiss()
+                }
+            }
+
         }
         alert.create().show()
     }
 
     fun authorizeUser() {
-        val connectionParams = ConnectionParams.Builder((application as SpotifyConnection).clientId)
-            .setRedirectUri((application as SpotifyConnection).redirectUri)
+        val connectionParams = ConnectionParams.Builder(spotifyConnection.clientId)
+            .setRedirectUri(spotifyConnection.redirectUri)
             .showAuthView(true)
             .build()
 
 
         SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
             override fun onConnected(p0: SpotifyAppRemote?) {
-                (this as SpotifyConnection).connection = p0
+                (application as SpotifyConnection).connection = p0
                 Log.i(TAG, "Connection Successful")
                 // TODO: send user to home screen activity
                 val homeIntent = Intent(mainActivity, HomeActivity::class.java)
