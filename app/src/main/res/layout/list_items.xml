@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@android:color/transparent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardElevation="0dp">
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:background="@drawable/list_bg">
+
         <ImageView
+            android:id="@+id/songImg"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:id="@+id/songImg"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
+            android:layout_centerVertical="true"
             android:src="@drawable/ic_launcher_foreground" />
 
         <LinearLayout
@@ -19,29 +25,51 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:layout_toEndOf="@+id/songImg"
-            android:padding="8dp">
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="90dp"
+            android:paddingBottom="8dp">
 
             <TextView
+                android:id="@+id/songTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Song name"
-                android:id="@+id/songTitle"/>
+                android:text="Song namscjksjckscjsksjcskcjskcjskcsjckjcskcjskcjscksjcksjcskcjskcjskcj sscscscsjcijcsie"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
 
             <TextView
+                android:id="@+id/songArtist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Artist name"
-                android:id="@+id/songArtist"/>
-
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
         </LinearLayout>
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:src="@drawable/dots"
-            android:background="@drawable/list_bg"
-            android:id="@+id/songAction" />
 
+        <ImageButton
+            android:id="@+id/songAction"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/hori_dots"
+            android:background="@drawable/list_bg" />
+
+        <TextView
+            android:id="@+id/songLength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/songAction"
+            android:layout_centerVertical="true"
+            android:text="4:30"
+            android:padding="8dp"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="10sp"/>
     </RelativeLayout>
 
 </androidx.cardview.widget.CardView>
