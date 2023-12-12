@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
@@ -40,10 +41,33 @@ class MainActivity : AppCompatActivity() {
     //private var spotifyAppRemote: SpotifyAppRemote? = null
     private val mainActivity = this
     lateinit var spotifyConnection: SpotifyConnection
+
+    lateinit var bottomNav : BottomNavigationView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         spotifyConnection = (application as SpotifyConnection)
+
+        bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
+        bottomNav.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home -> {
+                    val homeIntent = Intent(this, HomeActivity::class.java)
+                    startActivity(homeIntent)
+                    true
+                }
+                R.id.nav_search -> {
+                    val searchIntent = Intent(this, SearchActivity::class.java)
+                    startActivity(searchIntent)
+                    true
+                }
+                else -> {true}
+            }
+
+        }
+
+
     }
 
     override fun onStart() {

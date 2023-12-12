@@ -1,26 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relativelayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".search">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <!-- List View from which data is to be searched -->
+    <ListView
+        android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/search_bar"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/textView"
-            android:layout_width="200dp"
-            android:layout_height="66dp"
-            android:textAlignment="center" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="fill_parent" />
+</RelativeLayout>
