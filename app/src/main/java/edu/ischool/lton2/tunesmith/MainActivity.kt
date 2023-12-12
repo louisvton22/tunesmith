@@ -111,8 +111,9 @@ class MainActivity : AppCompatActivity() {
             override fun onConnected(p0: SpotifyAppRemote?) {
                 (application as SpotifyConnection).connection = p0
                 Log.i(TAG, "Connection Successful")
+//                connected()
                 // TODO: send user to home screen activity
-                val homeIntent = Intent(mainActivity, HomeActivity::class.java)
+                val homeIntent = Intent(mainActivity, PlaylistViewActivity::class.java)
                 startActivity(homeIntent)
 
             }
@@ -125,7 +126,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun connected() {
         // Then we will write some more code here.
-        (this as SpotifyConnection).getConn()?.let {
+        (application as SpotifyConnection).getConn()?.let {
             val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
             it.playerApi.play(playlistURI)
             // Subscribe to PlayerState
@@ -136,11 +137,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
+    override fun onDestroy() {
+        Log.i(TAG, "disconnected Spotify App Remote")
         (application as SpotifyConnection).getConn()?.let {
             SpotifyAppRemote.disconnect(it)
         }
+        super.onDestroy()
     }
 }
