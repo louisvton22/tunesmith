@@ -148,6 +148,7 @@ class HomeActivity : AppCompatActivity() {
             // val headers = mapOf("Authorization" to "Bearer $accessToken")
 
             var urlConnection = apiUrl.openConnection() as HttpURLConnection
+            Log.d(TAG, "Bearer ${sharedPref.getString("AccessToken", "")}")
             Log.i(TAG, "requesting listening history details")
             urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
 
