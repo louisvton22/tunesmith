@@ -1,5 +1,6 @@
 package edu.ischool.lton2.tunesmith
 
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -19,21 +20,35 @@ import com.spotify.protocol.error.SpotifyAppRemoteException
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
+
+class SpotifyConnection: Application() {
+    var connection: SpotifyAppRemote? = null
+    val clientId = "23b30f0dcd494714b0fe85df516f4d02"
+    val redirectUri = "https://louis-ton.netlify.app/"
+    private val TAG = "SpotifyConnection"
+    override fun onCreate() {
+        super.onCreate()
+        Log.i(TAG,"Spotify Connection initialized")
+    }
+    fun getConn() : SpotifyAppRemote? {
+        return connection
+    }
+}
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
-    private val clientId = "23b30f0dcd494714b0fe85df516f4d02"
-    private val redirectUri = "https://louis-ton.netlify.app/"
-    private var spotifyAppRemote: SpotifyAppRemote? = null
+
+    //private var spotifyAppRemote: SpotifyAppRemote? = null
+    private val mainActivity = this
+    lateinit var spotifyConnection: SpotifyConnection
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        spotifyConnection = (application as SpotifyConnection)
     }
 
     override fun onStart() {
         super.onStart()
         findViewById<Button>(R.id.btnConnect).setOnClickListener{ authorizeUser() }
-
-
         Log.i(TAG, "Showing Auth Screen")
 
 
@@ -68,32 +83,49 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            else -> {
+                alert.setMessage("Spotify not installed. Please downlaod from the Play Store")
+                alert.setPositiveButton("Go") { dialog, which ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music")
+                    startActivity(intent)
+                    dialog.dismiss()
+                }
+                alert.setNegativeButton("Cancel") {dialog, which ->
+                    dialog.dismiss()
+                }
+            }
+
         }
         alert.create().show()
     }
 
     fun authorizeUser() {
-        val connectionParams = ConnectionParams.Builder(clientId)
-            .setRedirectUri(redirectUri)
+        val connectionParams = ConnectionParams.Builder(spotifyConnection.clientId)
+            .setRedirectUri(spotifyConnection.redirectUri)
             .showAuthView(true)
             .build()
 
 
-            SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
-                override fun onConnected(p0: SpotifyAppRemote?) {
-                    spotifyAppRemote = p0
-                    Log.i(TAG, "Connection Successful")
-                }
+        SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
+            override fun onConnected(p0: SpotifyAppRemote?) {
+                (application as SpotifyConnection).connection = p0
+                Log.i(TAG, "Connection Successful")
+                // TODO: send user to home screen activity
+                val homeIntent = Intent(mainActivity, HomeActivity::class.java)
+                startActivity(homeIntent)
 
-                override fun onFailure(p0: Throwable?) {
-                    Log.e(TAG, "connection failed $p0")
-                    handleException(p0 as SpotifyAppRemoteException)
-                }
-            })
+            }
+
+            override fun onFailure(p0: Throwable?) {
+                Log.e(TAG, "connection failed $p0")
+                handleException(p0 as SpotifyAppRemoteException)
+            }
+        })
     }
     private fun connected() {
         // Then we will write some more code here.
-        spotifyAppRemote?.let {
+        (this as SpotifyConnection).getConn()?.let {
             val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
             it.playerApi.play(playlistURI)
             // Subscribe to PlayerState
@@ -107,7 +139,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
 
-        spotifyAppRemote?.let {
+        (application as SpotifyConnection).getConn()?.let {
             SpotifyAppRemote.disconnect(it)
         }
     }
