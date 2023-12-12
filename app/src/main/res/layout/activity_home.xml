@@ -23,29 +23,41 @@
         android:id="@+id/txtHistoryRec"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="108dp"
+        android:layout_marginTop="32dp"
         android:text="TextView"
-        app:layout_constraintBottom_toTopOf="@+id/cslHistoryRec"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.045"
+        app:layout_constraintHorizontal_bias="0.027"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtWelcome" />
 
-    <HorizontalScrollView
-        android:id="@+id/cslHistoryRec"
-        android:layout_width="420dp"
-        android:layout_height="115dp"
-        android:contentDescription="Recommended songs based off history"
+    <TextView
+        android:id="@+id/txtRec"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="@+id/recHistory"
+        app:layout_constraintEnd_toEndOf="@+id/recRecommends"
+        app:layout_constraintHorizontal_bias="0.027"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtWelcome"
+        app:layout_constraintVertical_bias="0.944" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recHistory"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtHistoryRec"
+        app:layout_constraintVertical_bias="0.176" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recRecommends"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.555"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.37">
+        app:layout_constraintStart_toStartOf="@+id/recHistory"
+        app:layout_constraintTop_toBottomOf="@+id/recHistory" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical" />
-    </HorizontalScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
