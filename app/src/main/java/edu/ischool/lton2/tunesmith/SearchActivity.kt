@@ -39,7 +39,6 @@ import kotlin.reflect.typeOf
 
 class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener, NavBar{
     private val TAG = "SearchActivity"
-    lateinit var bottomNav : BottomNavigationView
     var subscription: Subscription<PlayerState>? = null
     var currentlyPlaying: String = ""
     lateinit var spotifyConnection: SpotifyConnection
