@@ -48,6 +48,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     val networkThread = Executors.newSingleThreadExecutor()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        invalidateOptionsMenu()
         setContentView(R.layout.activity_search)
         val btnGetRec  = findViewById<Button>(R.id.btnGetRec)
         btnGetRec.text = "Get Recommended Songs"
