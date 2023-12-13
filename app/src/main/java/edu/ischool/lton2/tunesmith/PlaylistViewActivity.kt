@@ -1,6 +1,7 @@
 package edu.ischool.lton2.tunesmith
 
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,11 +11,16 @@ import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.spotify.android.appremote.api.PlayerApi
+import com.spotify.protocol.client.Subscription
+import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
 
 class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickListener {
 
     private val TAG = "PlaylistActivity"
+    private var currentlyPlaying = ""
+    private var subscription:Subscription<PlayerState>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
@@ -28,17 +34,33 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
-        Log.i(TAG, "${(application as SpotifyConnection).getConn()}")
-        (application as SpotifyConnection).getConn()?.let {
+        currentlyPlaying = song.title
+        (application as SpotifyConnection).getConn()?.let { appRemote ->
             val trackURI = song.id
-            it.playerApi.play(trackURI).setResultCallback { result ->
-                Log.e(TAG, result.toString())
+
+            // Set shuffle mode to OFF (optional)
+            appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
+                Log.e(TAG, "Set shuffle mode to OFF")
             }
-            // Subscribe to PlayerState
-            it.playerApi.subscribeToPlayerState().setEventCallback {
-                val track: Track = it.track
-                Log.d("PlaylistActivity", track.name + " by " + track.artist.name)
-            }
+            subscription?.cancel()
+                appRemote.playerApi.play(trackURI).setResultCallback { _ ->
+                    Log.i(TAG, "Start new song")
+                    Handler().postDelayed({
+                        subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
+
+                            val track: Track = it.track
+                            Log.d("PlaylistActivity", track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI")
+                            if (track.uri != trackURI) {
+                                // Song has changed, pause the player
+                                appRemote.playerApi.pause().setResultCallback { _ ->
+                                    Log.e(TAG, "Paused playback after one song")
+                                }
+                                subscription?.cancel()
+                            }
+                        }
+                    }, 500)
+                }
+
         }
     }
 }
