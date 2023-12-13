@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -44,12 +45,13 @@ class PlaylistCreatorActivity: AppCompatActivity() {
         createBtn.setOnClickListener {
             if(name.text.toString().trim() != "") {
                 // button action to create playlist
+                var a =   limitSongNumbers(spinner.selectedItem.toString())
+                Log.d("songs in playlst ", a.toString())
                 Playlist (
                     name.text.toString(),
                     description.text.toString(),
                     "",
                     limitSongNumbers(spinner.selectedItem.toString())
-                    // check if spinner defaults when not selected
                     // launch intent / bundle to playlistview
                 )
             }
