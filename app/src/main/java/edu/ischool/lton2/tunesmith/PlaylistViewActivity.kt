@@ -26,7 +26,7 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
         setContentView(R.layout.playlist_view)
         val listView = findViewById<ListView>(R.id.list_view)
 
-        val playlistAdapter = PlaylistAdapter(playlistExample, this)
+        val playlistAdapter = PlaylistAdapter(playlistExample.songs, this)
 
         listView.adapter = playlistAdapter
 
@@ -34,6 +34,7 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
+        Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
@@ -43,7 +44,7 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
             currentlyPlaying = song.title
         (application as SpotifyConnection).getConn()?.let { appRemote ->
             val trackURI = song.id
-
+            Log.d("song id", trackURI)
             // Set shuffle mode to OFF (optional)
             appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
                 Log.e(TAG, "Set shuffle mode to OFF")
