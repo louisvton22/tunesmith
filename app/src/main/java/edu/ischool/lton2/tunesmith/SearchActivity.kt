@@ -6,10 +6,15 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ListView
+import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
@@ -24,6 +29,21 @@ import java.net.URL
 import java.util.concurrent.Executors
 import kotlin.reflect.typeOf
 
+//TODO: Delete when done
+val layoutTester  = listOf<Song>(
+    Song (
+        "song1",
+        "artist1",
+        "image1",
+        "length1"
+    ),
+    Song (
+        "song2",
+        "artist2",
+        "image2",
+        "length2"
+    )
+)
 class SearchActivity : AppCompatActivity() {
     private val TAG = "SearchActivity"
     lateinit var bottomNav : BottomNavigationView
@@ -58,17 +78,9 @@ class SearchActivity : AppCompatActivity() {
         }
         Log.i(TAG, "search activity created")
 
-//        val testSearch = findViewById<Button>(R.id.search_btn)
-//        testSearch.setOnClickListener{
-//            networkThread.execute{
-//                try {
-//                    searchSong("blah")
-//                } catch(err: Exception){
-//                    Log.d(TAG, err.toString())
-//                }
-//            }
-//
-//        }
+        val songListView = findViewById<ListView>(R.id.listView)
+        val searchAdapter = SearchResultsAdapter(layoutTester)
+        songListView.adapter = searchAdapter
 
     }
 
@@ -77,7 +89,8 @@ class SearchActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.top_menu, menu)
 
         val searchViewItem = menu.findItem(R.id.search_bar)
-        val searchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+        val searchView = searchViewItem.actionView as SearchView
+        searchView.queryHint = "Search for songs here"
         Log.i(TAG, "searchView: " + searchView.toString())
 
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -159,4 +172,44 @@ class SearchActivity : AppCompatActivity() {
 //            listView.adapter = PlaylistAdapter(trackList)
         }
     }
+}
+
+class SearchResultsAdapter(private val trackList: List<Song>): BaseAdapter() {
+    override fun getCount(): Int {
+        return trackList.size
+    }
+
+    override fun getItem(index: Int): Any {
+        return trackList.get(index)
+    }
+
+    override fun getItemId(index: Int): Long {
+        //TODO: edit Song data class to have id
+        return index.toLong()
+    }
+
+    override fun getView(index: Int, convertView: View?, parent: ViewGroup?): View {
+        val track = getItem(index) as Song
+        val inflater = LayoutInflater.from(parent?.context)
+        val view = convertView ?: inflater.inflate(R.layout.list_items, parent, false)
+        val viewHolder : SongViewHolder
+
+        if (convertView == null) {
+            viewHolder = SongViewHolder(view)
+            view.tag = viewHolder
+        } else {
+            viewHolder = convertView.tag as SongViewHolder
+        }
+
+        viewHolder.songTitle.text = track.title
+        viewHolder.songArtist.text = track.artist
+
+        return view
+    }
+    class SongViewHolder(view: View) {
+        val songTitle = view.findViewById<TextView>(R.id.songTitle)
+        val songArtist = view.findViewById<TextView>(R.id.songArtist)
+    }
+
+
 }
