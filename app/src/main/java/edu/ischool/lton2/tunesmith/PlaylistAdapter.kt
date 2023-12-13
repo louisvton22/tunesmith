@@ -1,17 +1,21 @@
 package edu.ischool.lton2.tunesmith
 
+import android.graphics.Color
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.BaseAdapter
+import android.widget.ImageView
 import android.widget.TextView
 
 class PlaylistAdapter(private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
 
     interface OnSongClickListener {
         fun onSongClick(song: Song)
+
+        fun onSongSelected(song:Song, view:View)
     }
     override fun getCount(): Int {
         return songs.size
@@ -39,8 +43,18 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
         viewHolder.songTitle.text = song.title
         viewHolder.songArtist.text = song.artist
 
+        if (song.selected) {
+            view.setBackgroundColor(Color.parseColor("#1DB954"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+        }
         view.setOnClickListener {
             onSongClickListener.onSongClick(song)
+        }
+
+        view.setOnLongClickListener {
+            onSongClickListener.onSongSelected(song, it)
+            true
         }
 
         return view
@@ -48,5 +62,6 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
     class SongViewHolder(view: View) {
         val songTitle = view.findViewById<TextView>(R.id.songTitle)
         val songArtist = view.findViewById<TextView>(R.id.songArtist)
+        val image = view.findViewById<ImageView>(R.id.songAction)
     }
 }

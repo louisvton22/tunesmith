@@ -71,6 +71,8 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
         }
         }
     }
+
+    override fun onSongSelected(song: Song, view: View) {}
     private fun pausePlayer() {
         (application as SpotifyConnection).getConn()?.let { appRemote ->
             appRemote.playerApi.pause().setResultCallback { _ ->
@@ -93,7 +95,8 @@ data class Song(
     val artist: String,
     val cover: String,
     val length: String,
-    val id: String
+    val id: String,
+    var selected: Boolean //determines whether the song should be highlighted or not
     )
 
 val example  = listOf<Song>(
@@ -102,21 +105,24 @@ val example  = listOf<Song>(
         "Remi Wolf",
         "image1",
         "length1",
-        "spotify:track:0T7aTl1t15HKHfwep4nANV"
+        "spotify:track:0T7aTl1t15HKHfwep4nANV",
+        false
     ),
     Song (
         "Rush",
         "Troye Sivan",
         "image2",
         "length2",
-        "spotify:track:3xIMkM5LgbVDkpO74O3Np3"
+        "spotify:track:3xIMkM5LgbVDkpO74O3Np3",
+        false
     ),
     Song (
         "Bounce",
         "Emotional Oranges",
         "image3",
         "length3",
-        "spotify:track:3qptm6j356NV9FOJri6OgZ"
+        "spotify:track:3qptm6j356NV9FOJri6OgZ",
+        false
     )
 )
 

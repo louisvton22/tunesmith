@@ -3,9 +3,13 @@ package edu.ischool.lton2.tunesmith
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
@@ -19,6 +23,9 @@ import android.widget.SearchView
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.spotify.protocol.client.Subscription
+import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Track
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import org.json.JSONArray
@@ -33,9 +40,11 @@ import kotlin.reflect.typeOf
 class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener{
     private val TAG = "SearchActivity"
     lateinit var bottomNav : BottomNavigationView
-
+    var subscription: Subscription<PlayerState>? = null
+    var currentlyPlaying: String = ""
     lateinit var spotifyConnection: SpotifyConnection
     lateinit var sharedPref: SharedPreferences
+    var selectedSongs: MutableList<Song> = mutableListOf()
 
     val networkThread = Executors.newSingleThreadExecutor()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,15 +140,17 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
                 artistName,
                 smallImageObj.getString("url"),
                 track.getInt("duration_ms").toString(),
-                track.getString("id")
+                "spotify:track:${track.getString("id")}",
+                false
             )
             songResults.add(trackData)
         }
         Log.i(TAG, songResults.toString())
         val tracklist = songResults.toList()
+
         this.runOnUiThread{
             val listView = findViewById<ListView>(R.id.listView)
-            listView.adapter = PlaylistAdapter(tracklist, item)
+            listView.adapter = PlaylistAdapter(selectedSongs.toList() + tracklist, item)
         }
         return songResults.toList()
 
@@ -147,7 +158,73 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "song clicked")
-        TODO("Not yet implemented")
+        Log.i(TAG, "${song.title} clicked")
+        Log.i(TAG, "$song click")
+
+        if(currentlyPlaying == song.title) {
+            // song currently playing, pause the song
+            pausePlayer()
+            currentlyPlaying = ""
+        } else {
+            currentlyPlaying = song.title
+            (application as SpotifyConnection).getConn()?.let { appRemote ->
+                val trackURI = song.id
+                Log.d("song id", trackURI)
+                // Set shuffle mode to OFF (optional)
+                appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
+                    Log.e(TAG, "Set shuffle mode to OFF")
+                }
+                subscription?.cancel()
+                appRemote.playerApi.play(trackURI).setResultCallback { _ ->
+                    Log.i(TAG, "Start new song")
+                    Handler().postDelayed({
+                        subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
+
+                            val track: Track = it.track
+                            Log.d(
+                                "PlaylistActivity",
+                                track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                            )
+                            if (track.uri != trackURI) {
+                                // Song has changed, pause the player
+                                pausePlayer()
+                            }
+                        }
+                    }, 500)
+                }
+
+            }
+        }
+    }
+
+    //highlight songs selected to generate new playlist
+    override fun onSongSelected(song: Song, view: View) {
+        // select songs if they are not already in selected category
+        val typedValue = TypedValue()
+        val ogBgColor = (view.rootView.background as ColorDrawable).color
+        val ogTxtColor = this.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+        if (!selectedSongs.contains(song)) {
+            view.setBackgroundColor(Color.parseColor("#1DB954"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+            song.selected = true
+            selectedSongs.add(song)
+        } else {
+            view.setBackgroundColor(ogBgColor)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            song.selected = false
+            selectedSongs.remove(song)
+        }
+
+    }
+    private fun pausePlayer() {
+        (application as SpotifyConnection).getConn()?.let { appRemote ->
+            appRemote.playerApi.pause().setResultCallback { _ ->
+                Log.e(TAG, "Paused playback after one song")
+            }
+        }
+        subscription?.cancel()
     }
 
 }
