@@ -37,7 +37,7 @@ import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.reflect.typeOf
 
-class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener{
+class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener, NavBar{
     private val TAG = "SearchActivity"
     lateinit var bottomNav : BottomNavigationView
     var subscription: Subscription<PlayerState>? = null
@@ -53,25 +53,9 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
-
-        bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
-        bottomNav.setOnItemSelectedListener {
-            when (it.itemId) {
-                R.id.nav_home -> {
-                    val homeIntent = Intent(this, HomeActivity::class.java)
-                    startActivity(homeIntent)
-                    true
-                }
-                R.id.nav_search -> {
-                    val searchIntent = Intent(this, SearchActivity::class.java)
-                    startActivity(searchIntent)
-                    true
-                }
-                else -> {true}
-            }
-
-        }
         Log.i(TAG, "search activity created")
+
+        this.setupNav(this, R.id.nav_search)
 
     }
 

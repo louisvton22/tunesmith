@@ -1,14 +1,15 @@
 package edu.ischool.lton2.tunesmith
 
+
 import android.graphics.Color
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
+
 
 class PlaylistAdapter(private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
 
@@ -42,7 +43,6 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
 
         viewHolder.songTitle.text = song.title
         viewHolder.songArtist.text = song.artist
-
         if (song.selected) {
             view.setBackgroundColor(Color.parseColor("#1DB954"))
             view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
