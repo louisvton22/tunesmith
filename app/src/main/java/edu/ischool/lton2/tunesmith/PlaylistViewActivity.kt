@@ -34,7 +34,13 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
-        currentlyPlaying = song.title
+
+        if(currentlyPlaying == song.title) {
+            // song currently playing, pause the song
+            pausePlayer()
+            currentlyPlaying = ""
+        } else {
+            currentlyPlaying = song.title
         (application as SpotifyConnection).getConn()?.let { appRemote ->
             val trackURI = song.id
 
@@ -43,25 +49,34 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
                 Log.e(TAG, "Set shuffle mode to OFF")
             }
             subscription?.cancel()
-                appRemote.playerApi.play(trackURI).setResultCallback { _ ->
-                    Log.i(TAG, "Start new song")
-                    Handler().postDelayed({
-                        subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
+            appRemote.playerApi.play(trackURI).setResultCallback { _ ->
+                Log.i(TAG, "Start new song")
+                Handler().postDelayed({
+                    subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
 
-                            val track: Track = it.track
-                            Log.d("PlaylistActivity", track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI")
-                            if (track.uri != trackURI) {
-                                // Song has changed, pause the player
-                                appRemote.playerApi.pause().setResultCallback { _ ->
-                                    Log.e(TAG, "Paused playback after one song")
-                                }
-                                subscription?.cancel()
-                            }
+                        val track: Track = it.track
+                        Log.d(
+                            "PlaylistActivity",
+                            track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                        )
+                        if (track.uri != trackURI) {
+                            // Song has changed, pause the player
+                            pausePlayer()
                         }
-                    }, 500)
-                }
+                    }
+                }, 500)
+            }
 
         }
+        }
+    }
+    private fun pausePlayer() {
+        (application as SpotifyConnection).getConn()?.let { appRemote ->
+            appRemote.playerApi.pause().setResultCallback { _ ->
+                Log.e(TAG, "Paused playback after one song")
+            }
+        }
+        subscription?.cancel()
     }
 }
 
