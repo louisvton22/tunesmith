@@ -34,6 +34,7 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
+        Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
