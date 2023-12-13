@@ -20,6 +20,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
+import kotlin.reflect.typeOf
 
 class SearchActivity : AppCompatActivity() {
     private val TAG = "SearchActivity"
@@ -109,8 +110,8 @@ class SearchActivity : AppCompatActivity() {
 
     private fun searchSong(query: String) {
         Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
-        val fillerQuery = "blackpink"
-        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track")
+        val fillerQuery = "White Lie"
+        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=2")
         var urlConnection = searchUrl.openConnection() as HttpURLConnection
         Log.i(TAG, "searching for tracks matching query")
         urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
@@ -120,12 +121,38 @@ class SearchActivity : AppCompatActivity() {
         val inputStream = urlConnection.inputStream
 
         val reader  = InputStreamReader(inputStream)
-        val tracks: JSONArray
+        var tracks: JSONArray
         reader.use {
             val json = JSONObject(it.readText())
-            Log.i(TAG, "search results: $json")
-            tracks = json.getJSONArray("items")
-            Log.i(TAG, "tracks : $tracks")
+            tracks = json.getJSONObject("tracks").getJSONArray("items")
+            Log.i(TAG, "search results: $tracks")
+        }
+
+        var songResults: MutableList<HomeActivity.Song> = mutableListOf()
+        // grab "name", duration "duration_ms", "artists" "name" (nested)
+        for (i in 0 until tracks.length()) {
+            val track = tracks.getJSONObject(i)
+            Log.i(TAG, "test iterate: $track")
+            Log.i(TAG, "track name: ${track.getString("name")}")
+            Log.i(TAG, "duration: ${track.getInt("duration_ms")}")
+            Log.i(TAG, "song id: ${track.getString("id")}")
+            val artistObj = track.getJSONArray("artists")
+
+            var artistName = artistObj.getJSONObject(0).getString("name")
+            for (j in 1 until artistObj.length()) {
+                artistName += ", " + artistObj.getJSONObject(j).getString("name")
+            }
+            Log.i(TAG, "artist: $artistName")
+//            Log.i(TAG, "track name: ${track.getString("name")}")
+//            val song = HomeActivity.Song(
+//                track.getString("name"),
+//                track.getJSONArray("artists").getJSONObject(0).getString("name"),
+//                track.getString("id")
+//            )
+//            songResults.add(song)
+
         }
     }
 }
+//TODO: extract to be used across all activities
+data class Track(val name: String, val artists: String, val trackId: String, val durationMs: Int)
