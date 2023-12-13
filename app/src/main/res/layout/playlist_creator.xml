@@ -54,22 +54,19 @@
         android:text="Limit the number of songs in your playlist"
         android:layout_gravity="center_horizontal"
         android:textStyle="bold" />
-
-    <Spinner
-        android:id="@+id/spinner"
+    <NumberPicker
+        android:id="@+id/numberPicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:padding="15dp" />
+        android:gravity="center" />
 
     <Button
         android:id="@+id/createPlaylist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Create"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="20dp" />
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>
