@@ -53,7 +53,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         btnGetRec.text = "Get Recommended Songs"
         btnGetRec.setOnLongClickListener {
             if (selectedSongs.isNotEmpty()) {
-                val playlistIntent = Intent(this, PlaylistViewActivity::class.java)
+                val playlistIntent = Intent(this, PlaylistCreatorActivity::class.java)
                 val bundle = Bundle()
                 val trackSeeds = selectedSongs.map { song ->
                     song.id.replace("spotify:track:", "")

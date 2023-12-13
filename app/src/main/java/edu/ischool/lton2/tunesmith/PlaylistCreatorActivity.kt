@@ -48,20 +48,26 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             if(name.text.toString().trim() != "") {
                 // button action to create playlist
                 var array = getSongNumbers()
-                Playlist (
+                val newPlaylist = Playlist (
                     name.text.toString(),
                     description.text.toString(),
                     picture, // if picture is "" then use default/ drawable picture
                     limitSongNumbers(array[numberPicker.value])
                     // launch intent / bundle to playlistview
                 )
+                val playlistViewIntent = Intent(this, PlaylistViewActivity::class.java)
+                val bundle = this.intent.extras
+                bundle?.putParcelable("Playlist", newPlaylist)
+                bundle?.putInt("nSongs", numberPicker.value)
+                playlistViewIntent.putExtras(bundle!!)
+                startActivity(playlistViewIntent)
             }
         }
 
     }
     private fun getSongNumbers(): Array<String> {
         // Create a list of numbers based on the number of songs
-        return (1..example.size).map { it.toString() }.reversed().toTypedArray() // replace example
+        return (1..30).map { it.toString() }.reversed().toTypedArray() // replace example
     }
     private fun limitSongNumbers(number: String): List<Song> { // replace example
         return example.take(number.toInt())

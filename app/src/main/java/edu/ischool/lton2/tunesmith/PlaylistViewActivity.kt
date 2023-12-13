@@ -1,23 +1,31 @@
 package edu.ischool.lton2.tunesmith
 
+import android.app.Person
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -33,6 +41,10 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
         setContentView(R.layout.playlist_view)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
         //this.setupNav(this, R.id.nav_search)
+
+        // inflate playlist with user title, image, and desc
+        inflatePlaylist()
+
         var recSongs: MutableList<Song> = mutableListOf()
         //get recommended songs
         var seedSongs = intent.extras?.getStringArrayList("Songs")?.toMutableList()
@@ -40,7 +52,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
         Executors.newSingleThreadExecutor().execute {
             val seedArtists = seedSongs?.joinToString(separator = ",")
             Log.i(TAG, "$seedArtists")
-            val recUrl = URL("https://api.spotify.com/v1/recommendations?limit=5&" +
+            val recUrl = URL("https://api.spotify.com/v1/recommendations?limit=${intent.extras?.getInt("nSongs")}&" +
                     "seed_tracks=$seedArtists")
             val urlConnection = recUrl.openConnection() as HttpURLConnection
             Log.i(TAG, "requesting recommended details")
@@ -94,6 +106,13 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
         }
     }
 
+    fun inflatePlaylist() {
+        val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+        val imageFile = File(playlist?.image)
+        findViewById<ImageView>(R.id.imgTV).setImageURI(Uri.fromFile(imageFile))
+        findViewById<TextView>(R.id.titleTV).text = playlist?.name
+        findViewById<TextView>(R.id.descriptionTV).text = playlist?.description
+    }
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
@@ -151,7 +170,37 @@ data class Playlist(
     val description: String,
     val image: String,
     val songs: List<Song>
+    ) : Parcelable {
+
+     constructor(parcel: Parcel) : this (
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        mutableListOf<Song>().apply {
+            parcel.readList(this, Song::class.java.classLoader)
+        }
     )
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(name)
+        dest.writeString(description)
+        dest.writeString(image)
+    }
+
+    companion object CREATOR : Parcelable.Creator<Playlist> {
+        override fun createFromParcel(source: Parcel): Playlist {
+            return Playlist(source)
+        }
+
+        override fun newArray(size: Int): Array<Playlist?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 
 data class Song(
     val title: String,
