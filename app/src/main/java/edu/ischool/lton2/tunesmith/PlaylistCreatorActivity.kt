@@ -56,15 +56,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 onClickImage()
             }
-             // doesnt ask again for permission and disables clickc on the image after denied ?????? or does it >:(( it deos
-//            else {
-//                val alert = AlertDialog.Builder(this)
-//                alert.setTitle("Access Error")
-//                alert.setMessage("Image access not granted")
-//                alert.setNegativeButton("Close") {dialog, which ->
-//                    dialog.dismiss()
-//                }
-//            }
+             // doesnt ask again for permission and disables clickc on the image after denied ??????
         }
     }
 
