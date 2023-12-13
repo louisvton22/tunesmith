@@ -30,23 +30,6 @@ import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.reflect.typeOf
 
-//TODO: Delete when done
-val layoutTester  = listOf<Song>(
-    Song (
-        "song1",
-        "artist1",
-        "image1",
-        "length1",
-        "id1"
-    ),
-    Song (
-        "song2",
-        "artist2",
-        "image2",
-        "length2",
-        "id2"
-    )
-)
 class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener{
     private val TAG = "SearchActivity"
     lateinit var bottomNav : BottomNavigationView
@@ -88,6 +71,8 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        var item = this
+
         Log.i(TAG, "oncreateoptionsmenu")
         menuInflater.inflate(R.menu.top_menu, menu)
 
@@ -97,12 +82,10 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 Log.i(TAG, "submitted query")
-                var tracklist : List<Song>
+                var tracklist : List<Song> = listOf()
                 networkThread.execute{
                     try {
-                        tracklist = searchSong("filler")
-                        val listView = findViewById<ListView>(R.id.listView)
-//                        listView.adapter = PlaylistAdapter(tracklist, context: Context )
+                        tracklist = searchSong("filler", item)
                     } catch (e: Exception) {
                         Log.d(TAG, e.toString())
                     }
@@ -111,20 +94,19 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
                 return false
             }
 
-            override fun onQueryTextChange(newText: String): Boolean {
-                Log.i(TAG, "textchaange")
-//                adapter.filter.filter(newText)
+            override fun onQueryTextChange(p0: String?): Boolean {
                 return false
             }
+
         })
         return super.onCreateOptionsMenu(menu)
     }
 
-    private fun searchSong(query: String) : List<Song> {
+    private fun searchSong(query: String, item: PlaylistAdapter.OnSongClickListener) : List<Song> {
         Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
         var fillerQuery = "White Lie"
         fillerQuery = fillerQuery.replace(" ", "+")
-        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=2")
+        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=15")
 
         var urlConnection = searchUrl.openConnection() as HttpURLConnection
         Log.i(TAG, "searching for tracks matching query")
@@ -160,7 +142,12 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             songResults.add(trackData)
         }
         Log.i(TAG, songResults.toString())
-//        displayResults(songResults.toList())
+        val tracklist = songResults.toList()
+        this.runOnUiThread{
+            val listView = findViewById<ListView>(R.id.listView)
+            Log.i(TAG, "tracklist before adding to adapter: $tracklist")
+            listView.adapter = PlaylistAdapter(tracklist, item)
+        }
         return songResults.toList()
 
     }
@@ -170,52 +157,11 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         TODO("Not yet implemented")
     }
 
-//    private fun displayResults(trackList: List<Song>) {
-//        this.runOnUiThread{
-//
-//            val listView = findViewById<ListView>(R.id.listView)
-//
-//            listView.adapter = PlaylistAdapter(trackList, this )
-//        }
-//    }
 }
 
-class SearchResultsAdapter(private val trackList: List<Song>): BaseAdapter() {
-    override fun getCount(): Int {
-        return trackList.size
-    }
-
-    override fun getItem(index: Int): Any {
-        return trackList.get(index)
-    }
-
-    override fun getItemId(index: Int): Long {
-        //TODO: edit Song data class to have id
-        return index.toLong()
-    }
-
-    override fun getView(index: Int, convertView: View?, parent: ViewGroup?): View {
-        val track = getItem(index) as Song
-        val inflater = LayoutInflater.from(parent?.context)
-        val view = convertView ?: inflater.inflate(R.layout.list_items, parent, false)
-        val viewHolder : SongViewHolder
-
-        if (convertView == null) {
-            viewHolder = SongViewHolder(view)
-            view.tag = viewHolder
-        } else {
-            viewHolder = convertView.tag as SongViewHolder
-        }
-
-        viewHolder.songTitle.text = track.title
-        viewHolder.songArtist.text = track.artist
-
-        return view
-    }
-    class SongViewHolder(view: View) {
-        val songTitle = view.findViewById<TextView>(R.id.songTitle)
-        val songArtist = view.findViewById<TextView>(R.id.songArtist)
-    }
 
 
-}
+
+
+
+
