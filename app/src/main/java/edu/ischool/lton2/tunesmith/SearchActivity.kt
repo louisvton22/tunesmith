@@ -101,12 +101,10 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         var searchUrl = URL("https://api.spotify.com/v1/search?q=$processedQuery&type=track&limit=20")
 
         var urlConnection = searchUrl.openConnection() as HttpURLConnection
-        Log.i(TAG, "searching for tracks matching query")
         urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
-
         val inputStream = urlConnection.inputStream
-
         val reader  = InputStreamReader(inputStream)
+
         var tracks: JSONArray
         reader.use {
             val json = JSONObject(it.readText())
@@ -124,10 +122,14 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             }
             Log.i(TAG, "artist: $artistName")
 
+            var smallImageObj= track.getJSONObject("album")
+                .getJSONArray("images")
+                .getJSONObject(2)
+            Log.i(TAG, smallImageObj.getString("url"))
             val trackData = Song(
                 track.getString("name"),
                 artistName,
-                "", //TODO
+                smallImageObj.getString("url"),
                 track.getInt("duration_ms").toString(),
                 track.getString("id")
             )
