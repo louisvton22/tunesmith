@@ -21,22 +21,27 @@
 
 
 
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintTop_toBottomOf="@id/appbar">
+<!--    <androidx.core.widget.NestedScrollView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/appbar">-->
 
 
-        <ListView
-            android:id="@+id/listView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:divider="@android:color/darker_gray"
-            android:dividerHeight="1dp"
-            android:padding="8dp"
-            android:background="@android:color/background_light" />
+<!--        <ListView-->
+<!--            android:id="@+id/listView"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:divider="@android:color/darker_gray"-->
+<!--            android:dividerHeight="1dp"-->
+<!--            android:padding="8dp"-->
+<!--            android:background="@android:color/background_light" />-->
 
-    </androidx.core.widget.NestedScrollView>
+<!--    </androidx.core.widget.NestedScrollView>-->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Search for song"
+        android:id="@+id/search_btn"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationBar"

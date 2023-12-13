@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Button
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
@@ -26,6 +27,9 @@ class SearchActivity : AppCompatActivity() {
 
     lateinit var spotifyConnection: SpotifyConnection
     lateinit var sharedPref: SharedPreferences
+
+    val networkThread = Executors.newSingleThreadExecutor()
+    //TODO: make UI thread
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
@@ -47,6 +51,18 @@ class SearchActivity : AppCompatActivity() {
                     true
                 }
                 else -> {true}
+            }
+
+        }
+
+        val testSearch = findViewById<Button>(R.id.search_btn)
+        testSearch.setOnClickListener{
+            networkThread.execute{
+                try {
+                    searchSong("blah")
+                } catch(err: Exception){
+                    Log.d(TAG, err.toString())
+                }
             }
 
         }
@@ -91,17 +107,20 @@ class SearchActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    fun searchSong(query: String) {
+    private fun searchSong(query: String) {
+        Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
         val fillerQuery = "blackpink"
-        var searchUrl = URL("https://api.spotify.com/v1/search?q={$fillerQuery}&type=track")
+        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track")
         var urlConnection = searchUrl.openConnection() as HttpURLConnection
         Log.i(TAG, "searching for tracks matching query")
         urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+        val checkAuth = urlConnection.getRequestProperty("Authorization")
+        Log.i(TAG, "check url auth token: ${checkAuth}")
 
-        var inputStream = urlConnection.inputStream
+        val inputStream = urlConnection.inputStream
 
-        var reader  = InputStreamReader(inputStream)
-        var tracks: JSONArray
+        val reader  = InputStreamReader(inputStream)
+        val tracks: JSONArray
         reader.use {
             val json = JSONObject(it.readText())
             Log.i(TAG, "search results: $json")

@@ -14,6 +14,7 @@ import androidx.core.content.edit
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
@@ -36,6 +37,8 @@ class HomeActivity : AppCompatActivity() {
     val networkThread = Executors.newSingleThreadExecutor()
     lateinit var user: JSONObject
     lateinit var sharedPref: SharedPreferences
+
+    lateinit var bottomNav : BottomNavigationView
     override fun onCreate(savedInstanceState: Bundle?) {
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
@@ -69,6 +72,24 @@ class HomeActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("Thread", "Error on network thread ${e.message}")
             }
+        }
+
+        bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
+        bottomNav.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home -> {
+                    val homeIntent = Intent(this, HomeActivity::class.java)
+                    startActivity(homeIntent)
+                    true
+                }
+                R.id.nav_search -> {
+                    val searchIntent = Intent(this, SearchActivity::class.java)
+                    startActivity(searchIntent)
+                    true
+                }
+                else -> {true}
+            }
+
         }
     }
 
