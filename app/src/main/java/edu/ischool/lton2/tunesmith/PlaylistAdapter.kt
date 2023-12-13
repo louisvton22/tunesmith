@@ -8,16 +8,16 @@ import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.TextView
 
-class PlaylistAdapter(private val playlist: Playlist, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
+class PlaylistAdapter(private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
 
     interface OnSongClickListener {
         fun onSongClick(song: Song)
     }
     override fun getCount(): Int {
-        return playlist.songs.size
+        return songs.size
     }
     override fun getItem(position: Int): Any {
-        return playlist.songs[position]
+        return songs[position]
     }
     override fun getItemId(position: Int): Long {
         return position.toLong()
