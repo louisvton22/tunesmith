@@ -54,6 +54,7 @@ class SearchActivity : AppCompatActivity() {
     val networkThread = Executors.newSingleThreadExecutor()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        invalidateOptionsMenu()
         setContentView(R.layout.activity_search)
 
         spotifyConnection = (application as SpotifyConnection)
