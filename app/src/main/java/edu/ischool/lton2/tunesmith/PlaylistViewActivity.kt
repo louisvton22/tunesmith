@@ -1,6 +1,8 @@
 package edu.ischool.lton2.tunesmith
 
 import android.content.ContentValues.TAG
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -14,19 +16,78 @@ import androidx.appcompat.app.AppCompatActivity
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
 class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSongClickListener { //?
     private val TAG = "PlaylistActivity"
     private var currentlyPlaying = ""
     private var subscription:Subscription<PlayerState>? = null
+    lateinit var sharedPref : SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
+        sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
+        //this.setupNav(this, R.id.nav_search)
+        var recSongs: MutableList<Song> = mutableListOf()
+        //get recommended songs
+        var seedSongs = intent.extras?.getStringArrayList("Songs")?.toMutableList()
+        Log.i(TAG, seedSongs.toString())
+        Executors.newSingleThreadExecutor().execute {
+            val seedArtists = seedSongs?.joinToString(separator = ",")
+            Log.i(TAG, "$seedArtists")
+            val recUrl = URL("https://api.spotify.com/v1/recommendations?limit=5&" +
+                    "seed_tracks=$seedArtists")
+            val urlConnection = recUrl.openConnection() as HttpURLConnection
+            Log.i(TAG, "requesting recommended details")
+            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
 
-        this.setupNav(this, R.id.nav_search)
+            val inputStream = urlConnection.inputStream
+            val reader  = InputStreamReader(inputStream)
+            var tracks:JSONArray
+            reader.use {
+                val json = JSONObject(it.readText())
+                Log.i(TAG, "recommended json: $json")
+                tracks = json.getJSONArray("tracks")
+                Log.i(TAG, "tracks : $tracks")
+
+            }
+            recSongs = mutableListOf()
+            for (i in 0 until tracks.length()) {
+                val track = tracks.getJSONObject(i)
+                Log.i(TAG, "track name: ${track.getString("name")}")
+                val artistObj = track.getJSONArray("artists")
+
+                var artistName = artistObj.getJSONObject(0).getString("name")
+                for (j in 1 until artistObj.length()) {
+                    artistName += ", " + artistObj.getJSONObject(j).getString("name")
+                }
+                Log.i(TAG, "artist: $artistName")
+
+                var smallImageObj= track.getJSONObject("album")
+                    .getJSONArray("images")
+                    .getJSONObject(2)
+                Log.i(TAG, smallImageObj.getString("url"))
+                val trackData = Song(
+                    track.getString("name"),
+                    artistName,
+                    smallImageObj.getString("url"),
+                    track.getInt("duration_ms").toString(),
+                    "spotify:track:${track.getString("id")}",
+                    false
+                )
+                recSongs.add(trackData)
+
+            }
+        }
+
         val listView = findViewById<ListView>(R.id.list_view)
 
-        val playlistAdapter = PlaylistAdapter(playlistExample.songs, this)
+        val playlistAdapter = PlaylistAdapter(recSongs, this)
 
         listView.adapter = playlistAdapter
 

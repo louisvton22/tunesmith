@@ -49,6 +49,21 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
+        val btnGetRec  = findViewById<Button>(R.id.btnGetRec)
+        btnGetRec.text = "Get Recommended Songs"
+        btnGetRec.setOnLongClickListener {
+            if (selectedSongs.isNotEmpty()) {
+                val playlistIntent = Intent(this, PlaylistViewActivity::class.java)
+                val bundle = Bundle()
+                val trackSeeds = selectedSongs.map { song ->
+                    song.id
+                }
+                bundle.putStringArrayList("Songs", ArrayList(trackSeeds))
+                playlistIntent.putExtras(bundle)
+                startActivity(playlistIntent)
+            }
+            true
+        }
 
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
@@ -192,12 +207,14 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
             song.selected = true
             selectedSongs.add(song)
+            Log.i(TAG, "Song selected: ${song.title}")
         } else {
             view.setBackgroundColor(ogBgColor)
             view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
             view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
             song.selected = false
             selectedSongs.remove(song)
+            Log.i(TAG, "Song deselected: ${song.title}")
         }
 
     }
