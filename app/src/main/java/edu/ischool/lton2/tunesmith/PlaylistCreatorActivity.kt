@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.NumberPicker
 import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -24,7 +25,8 @@ class PlaylistCreatorActivity: AppCompatActivity() {
     lateinit var name: EditText
     lateinit var description: EditText
     lateinit var createBtn: Button
-    lateinit var spinner: Spinner
+    lateinit var numberPicker: NumberPicker
+    var picture: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_creator)
@@ -33,34 +35,33 @@ class PlaylistCreatorActivity: AppCompatActivity() {
         name = findViewById(R.id.namePlaylist)
         description = findViewById(R.id.descriptionPlaylist)
         createBtn = findViewById(R.id.createPlaylist)
-        spinner = findViewById(R.id.spinner)
+        numberPicker = findViewById(R.id.numberPicker)
 
         img.setOnClickListener {
             checkAndRequestPermission()
         }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, getSongNumbers())
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
+        numberPicker.minValue = 0
+        numberPicker.maxValue = getSongNumbers().size -1
+        numberPicker.displayedValues = getSongNumbers()
 
         createBtn.setOnClickListener {
             if(name.text.toString().trim() != "") {
                 // button action to create playlist
-                var a =   limitSongNumbers(spinner.selectedItem.toString())
-                Log.d("songs in playlst ", a.toString())
+                var array = getSongNumbers()
                 Playlist (
                     name.text.toString(),
                     description.text.toString(),
-                    "",
-                    limitSongNumbers(spinner.selectedItem.toString())
+                    picture, // if picture is "" then use default/ drawable picture
+                    limitSongNumbers(array[numberPicker.value])
                     // launch intent / bundle to playlistview
                 )
             }
         }
 
     }
-    private fun getSongNumbers(): List<Int> {
+    private fun getSongNumbers(): Array<String> {
         // Create a list of numbers based on the number of songs
-        return (1..example.size).map { it.toInt() }.reversed() // replace example
+        return (1..example.size).map { it.toString() }.reversed().toTypedArray() // replace example
     }
     private fun limitSongNumbers(number: String): List<Song> { // replace example
         return example.take(number.toInt())
@@ -81,8 +82,6 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 onClickImage()
             }
-            // TODO:
-             // doesnt ask again for permission and disables clickc on the image after denied ??????
         }
     }
 
@@ -148,6 +147,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             val columnIndex = cursor.getColumnIndex(filePathColumn[0])
             val picturePath = cursor.getString(columnIndex)
             cursor.close()
+            picture = picturePath
             val bitmap = BitmapFactory.decodeFile(picturePath)
             img.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 150, 150, false));
         }
