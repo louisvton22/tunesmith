@@ -174,8 +174,9 @@ class MainActivity : AppCompatActivity() {
 }
 
 interface NavBar {
-    fun setupNav(activity: Activity) {
+    fun setupNav(activity: Activity, checkedItemValue: Int) {
         val bottomNav = activity.findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
+        bottomNav.selectedItemId = checkedItemValue
         bottomNav.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.nav_home -> {

@@ -15,15 +15,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TuneSmith"
         tools:targetApi="31">
-        <activity
-            android:name=".BaseActivity"
-            android:exported="false" />
+
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
         <activity
+            android:name=".PlaylistViewActivity"
+            android:exported="true" />
+        <activity
             android:name=".SearchActivity"
-            android:exported="false" />
+            android:exported="true">
+
+        </activity>
         <activity
             android:name=".MainActivity"
             android:exported="true">

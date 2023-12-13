@@ -14,7 +14,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
 
-        this.setupNav(this)
+        this.setupNav(this, R.id.nav_search)
         val listView = findViewById<ListView>(R.id.list_view)
 
         val playlistAdapter = PlaylistAdapter(playlistExample)

@@ -43,7 +43,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        this.setupNav(this)
+        this.setupNav(this, R.id.nav_home)
         findViewById<TextView>(R.id.txtRec).visibility = View.INVISIBLE
         findViewById<TextView>(R.id.txtHistoryRec).visibility = View.INVISIBLE
 

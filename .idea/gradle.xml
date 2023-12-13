@@ -5,7 +5,10 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="GRADLE" />
+<<<<<<< Updated upstream
         <option name="distributionType" value="DEFAULT_WRAPPED" />
+=======
+>>>>>>> Stashed changes
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="jbr-17" />
         <option name="modules">

@@ -14,7 +14,9 @@ class SearchActivity : AppCompatActivity(), NavBar {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
-        this.setupNav(this)
+        this.setupNav(this, R.id.nav_search)
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
