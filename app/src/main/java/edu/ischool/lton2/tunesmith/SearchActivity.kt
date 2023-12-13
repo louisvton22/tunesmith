@@ -64,16 +64,10 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         }
         Log.i(TAG, "search activity created")
 
-//        val songListView = findViewById<ListView>(R.id.listView)
-//        val searchAdapter = SearchResultsAdapter(layoutTester)
-//        songListView.adapter = searchAdapter
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         var item = this
-
-        Log.i(TAG, "oncreateoptionsmenu")
         menuInflater.inflate(R.menu.top_menu, menu)
 
         val searchViewItem = menu.findItem(R.id.search_bar)
@@ -81,11 +75,10 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
-                Log.i(TAG, "submitted query")
                 var tracklist : List<Song> = listOf()
                 networkThread.execute{
                     try {
-                        tracklist = searchSong("filler", item)
+                        tracklist = searchSong(query, item)
                     } catch (e: Exception) {
                         Log.d(TAG, e.toString())
                     }
@@ -104,9 +97,8 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
     private fun searchSong(query: String, item: PlaylistAdapter.OnSongClickListener) : List<Song> {
         Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
-        var fillerQuery = "White Lie"
-        fillerQuery = fillerQuery.replace(" ", "+")
-        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=15")
+        val processedQuery = query.replace(" ", "+")
+        var searchUrl = URL("https://api.spotify.com/v1/search?q=$processedQuery&type=track&limit=20")
 
         var urlConnection = searchUrl.openConnection() as HttpURLConnection
         Log.i(TAG, "searching for tracks matching query")
@@ -145,7 +137,6 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         val tracklist = songResults.toList()
         this.runOnUiThread{
             val listView = findViewById<ListView>(R.id.listView)
-            Log.i(TAG, "tracklist before adding to adapter: $tracklist")
             listView.adapter = PlaylistAdapter(tracklist, item)
         }
         return songResults.toList()
