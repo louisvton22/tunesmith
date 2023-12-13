@@ -1,5 +1,6 @@
 package edu.ischool.lton2.tunesmith
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -43,6 +44,16 @@ class HomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home)
         findViewById<TextView>(R.id.txtRec).visibility = View.INVISIBLE
         findViewById<TextView>(R.id.txtHistoryRec).visibility = View.INVISIBLE
+
+        var recyclerView = findViewById<RecyclerView>(R.id.recHistory)
+        var layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.layoutManager = layoutManager
+        recyclerView.adapter = SongAdapter(listOf())
+
+        recyclerView = findViewById<RecyclerView>(R.id.recRecommends)
+        layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.layoutManager = layoutManager
+        recyclerView.adapter = SongAdapter(listOf())
 
         var builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
             spotifyConnection.clientId,
@@ -129,8 +140,7 @@ class HomeActivity : AppCompatActivity() {
             }
         }
         this.runOnUiThread {
-            findViewById<TextView>(R.id.txtHistoryRec).text =
-                "Here's what you've been listening to"
+            findViewById<TextView>(R.id.txtHistoryRec).text = "Here's what you've been listening to"
             findViewById<TextView>(R.id.txtHistoryRec).visibility = View.VISIBLE
             findViewById<TextView>(R.id.txtWelcome).text =
                 "Welcome, ${sharedPref.getString("User", "listener")}"
@@ -178,10 +188,7 @@ class HomeActivity : AppCompatActivity() {
             // inflate listen history carousel
             this.runOnUiThread {
                 Log.i(TAG, "inflating history carousel")
-                val recyclerView = findViewById<RecyclerView>(R.id.recHistory)
-                val layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
-                recyclerView.layoutManager = layoutManager
-                recyclerView.adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs)
             }
 
             // inflate recommended songs carousel
@@ -224,10 +231,7 @@ class HomeActivity : AppCompatActivity() {
                     "Here are some recommended songs based on your listening history"
                 findViewById<TextView>(R.id.txtRec).visibility = View.VISIBLE
                 Log.i(TAG, "inflating recommended carousel")
-                val recyclerView = findViewById<RecyclerView>(R.id.recRecommends)
-                val layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
-                recyclerView.layoutManager = layoutManager
-                recyclerView.adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recRecommends).adapter = SongAdapter(recentSongs)
             }
     }
 

@@ -35,12 +35,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="@+id/recHistory"
+        app:layout_constraintBottom_toTopOf="@+id/recRecommends"
         app:layout_constraintEnd_toEndOf="@+id/recRecommends"
-        app:layout_constraintHorizontal_bias="0.027"
+        app:layout_constraintHorizontal_bias="0.045"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtWelcome"
-        app:layout_constraintVertical_bias="0.944" />
+        app:layout_constraintVertical_bias="0.894" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recHistory"
