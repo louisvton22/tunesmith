@@ -9,10 +9,12 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
-class PlaylistViewActivity : AppCompatActivity() {
+class PlaylistViewActivity : AppCompatActivity(), NavBar {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
+
+        this.setupNav(this)
         val listView = findViewById<ListView>(R.id.list_view)
 
         val playlistAdapter = PlaylistAdapter(playlistExample)

@@ -28,7 +28,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : AppCompatActivity(), NavBar {
     lateinit var spotifyConnection: SpotifyConnection
     private val TAG = "HomeActivity"
     private val REQUEST_CODE = 1337
@@ -42,6 +42,8 @@ class HomeActivity : AppCompatActivity() {
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        this.setupNav(this)
         findViewById<TextView>(R.id.txtRec).visibility = View.INVISIBLE
         findViewById<TextView>(R.id.txtHistoryRec).visibility = View.INVISIBLE
 

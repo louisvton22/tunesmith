@@ -8,30 +8,13 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity(), NavBar {
     lateinit var bottomNav : BottomNavigationView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
-        bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
-        bottomNav.setOnItemSelectedListener {
-            when (it.itemId) {
-                R.id.nav_home -> {
-                    val homeIntent = Intent(this, HomeActivity::class.java)
-                    startActivity(homeIntent)
-                    true
-                }
-                R.id.nav_search -> {
-                    val searchIntent = Intent(this, SearchActivity::class.java)
-                    startActivity(searchIntent)
-                    true
-                }
-                else -> {true}
-            }
-
-        }
-
+        this.setupNav(this)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
