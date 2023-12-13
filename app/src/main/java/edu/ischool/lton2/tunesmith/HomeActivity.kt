@@ -4,12 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.edit
 import androidx.recyclerview.widget.GridLayoutManager
@@ -155,7 +158,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
     }
 
 
-    data class Song(val name: String, val artists: String, val trackId: String)
+    data class Song(val name: String, val artists: String, val trackId: String, val cover: String = "")
 
     // Set up home screen for TuneSmith
     fun setupHomeUI() {
@@ -182,10 +185,15 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 for (i in 0 until tracks.length()) {
                     val track = tracks.getJSONObject(i).getJSONObject("track")
                     Log.i(TAG, "track name: ${track.getString("name")}")
+
+                    var smallImageObj= track.getJSONObject("album")
+                        .getJSONArray("images")
+                        .getJSONObject(1)
                     val song = Song(
                         track.getString("name"),
                         track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                        track.getString("id")
+                        track.getString("id"),
+                        smallImageObj.getString("url")
                     )
                     recentSongs.add(song)
 
@@ -224,17 +232,21 @@ class HomeActivity : AppCompatActivity(), NavBar {
         for (i in 0 until tracks.length()) {
             val track = tracks.getJSONObject(i)
             Log.i(TAG, "track name: ${track.getString("name")}")
+            var smallImageObj= track.getJSONObject("album")
+                .getJSONArray("images")
+                .getJSONObject(1)
             val song = Song(
                 track.getString("name"),
                 track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                track.getString("id")
+                track.getString("id"),
+                smallImageObj.getString("url")
             )
             recentSongs.add(song)
 
         }
             this.runOnUiThread {
                 findViewById<TextView>(R.id.txtRec).text =
-                    "Here are some recommended songs based on your listening history"
+                    "Recommended songs based on your listening history"
                 findViewById<TextView>(R.id.txtRec).visibility = View.VISIBLE
                 Log.i(TAG, "inflating recommended carousel")
                 findViewById<RecyclerView>(R.id.recRecommends).adapter = SongAdapter(recentSongs)
@@ -245,6 +257,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
         class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val textTitle: TextView = itemView.findViewById(R.id.textTitle)
             val textArtist: TextView = itemView.findViewById(R.id.textArtist)
+            val image = itemView.findViewById<ImageView>(R.id.trackCover)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -256,6 +269,17 @@ class HomeActivity : AppCompatActivity(), NavBar {
             val song = songs[position]
             holder.textArtist.text = song.artists
             holder.textTitle.text = song.name
+            val imgURL = URL(song.cover)
+            var image: Bitmap
+            val networkThread = Executors.newSingleThreadExecutor() // is it ok to make another one?
+            networkThread.execute{
+                try {
+                    image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
+                    holder.image.setImageBitmap(image)
+                } catch(e: Exception) {
+                    Log.e("PlaylistAdapter", e.toString())
+                }
+            }
         }
         override fun getItemCount(): Int {
             return songs.size

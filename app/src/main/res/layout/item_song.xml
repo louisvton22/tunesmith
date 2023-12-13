@@ -9,19 +9,19 @@
     android:layout_marginHorizontal="6dp">
 
     <ImageView
+        android:id="@+id/trackCover"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_centerVertical="true"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@drawable/music_note"
         />
     <TextView
     android:id="@+id/textTitle"
     android:layout_width="match_parent"
     android:layout_height="15dp"
-
     android:textSize="10sp"
         android:text="Title of the songjfeifjeifjeijfei"
-    android:textColor="@android:color/black"
+    android:textColor="@android:color/white"
         android:maxLines="1"
         android:ellipsize="end"/>
 
