@@ -26,6 +26,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
     lateinit var description: EditText
     lateinit var createBtn: Button
     lateinit var numberPicker: NumberPicker
+    var picture: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_creator)
@@ -47,12 +48,10 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             if(name.text.toString().trim() != "") {
                 // button action to create playlist
                 var array = getSongNumbers()
-                var a =   limitSongNumbers(array[numberPicker.value])
-                Log.d("songs in playlst ", a.toString())
                 Playlist (
                     name.text.toString(),
                     description.text.toString(),
-                    "",
+                    picture, // if picture is "" then use default/ drawable picture
                     limitSongNumbers(array[numberPicker.value])
                     // launch intent / bundle to playlistview
                 )
@@ -83,8 +82,6 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 onClickImage()
             }
-            // TODO:
-             // doesnt ask again for permission and disables clickc on the image after denied ??????
         }
     }
 
@@ -150,6 +147,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
             val columnIndex = cursor.getColumnIndex(filePathColumn[0])
             val picturePath = cursor.getString(columnIndex)
             cursor.close()
+            picture = picturePath
             val bitmap = BitmapFactory.decodeFile(picturePath)
             img.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 150, 150, false));
         }
