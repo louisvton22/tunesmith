@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                 Log.i(TAG, "Connection Successful")
 //                connected()
                 // TODO: send user to home screen activity
-                val homeIntent = Intent(mainActivity, PlaylistViewActivity::class.java)
+                val homeIntent = Intent(mainActivity, PlaylistCreatorActivity::class.java)
                 startActivity(homeIntent)
 
             }
