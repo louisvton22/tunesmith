@@ -26,6 +26,7 @@ import org.json.JSONObject
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.reflect.typeOf
 
@@ -35,16 +36,18 @@ val layoutTester  = listOf<Song>(
         "song1",
         "artist1",
         "image1",
-        "length1"
+        "length1",
+        "id1"
     ),
     Song (
         "song2",
         "artist2",
         "image2",
-        "length2"
+        "length2",
+        "id2"
     )
 )
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener{
     private val TAG = "SearchActivity"
     lateinit var bottomNav : BottomNavigationView
 
@@ -78,9 +81,9 @@ class SearchActivity : AppCompatActivity() {
         }
         Log.i(TAG, "search activity created")
 
-        val songListView = findViewById<ListView>(R.id.listView)
-        val searchAdapter = SearchResultsAdapter(layoutTester)
-        songListView.adapter = searchAdapter
+//        val songListView = findViewById<ListView>(R.id.listView)
+//        val searchAdapter = SearchResultsAdapter(layoutTester)
+//        songListView.adapter = searchAdapter
 
     }
 
@@ -90,13 +93,20 @@ class SearchActivity : AppCompatActivity() {
 
         val searchViewItem = menu.findItem(R.id.search_bar)
         val searchView = searchViewItem.actionView as SearchView
-        searchView.queryHint = "Search for songs here"
-        Log.i(TAG, "searchView: " + searchView.toString())
 
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 Log.i(TAG, "submitted query")
-                searchSong("bkah")
+                var tracklist : List<Song>
+                networkThread.execute{
+                    try {
+                        tracklist = searchSong("filler")
+                        val listView = findViewById<ListView>(R.id.listView)
+//                        listView.adapter = PlaylistAdapter(tracklist, context: Context )
+                    } catch (e: Exception) {
+                        Log.d(TAG, e.toString())
+                    }
+                }
                 Log.i(TAG, "searched")
                 return false
             }
@@ -107,71 +117,67 @@ class SearchActivity : AppCompatActivity() {
                 return false
             }
         })
-        Log.i(TAG, "end of oncreateoptionsmenu")
         return super.onCreateOptionsMenu(menu)
     }
 
-    private fun searchSong(query: String) {
+    private fun searchSong(query: String) : List<Song> {
         Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
-        val fillerQuery = "White Lie"
+        var fillerQuery = "White Lie"
+        fillerQuery = fillerQuery.replace(" ", "+")
         var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=2")
 
-        networkThread.execute{
-            try {
-                var urlConnection = searchUrl.openConnection() as HttpURLConnection
-                Log.i(TAG, "searching for tracks matching query")
-                urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
-                val checkAuth = urlConnection.getRequestProperty("Authorization")
-                Log.i(TAG, "check url auth token: ${checkAuth}")
+        var urlConnection = searchUrl.openConnection() as HttpURLConnection
+        Log.i(TAG, "searching for tracks matching query")
+        urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
 
-                val inputStream = urlConnection.inputStream
+        val inputStream = urlConnection.inputStream
 
-                val reader  = InputStreamReader(inputStream)
-                var tracks: JSONArray
-                reader.use {
-                    val json = JSONObject(it.readText())
-                    tracks = json.getJSONObject("tracks").getJSONArray("items")
-                    Log.i(TAG, "search results: $tracks")
-                }
-                var songResults: MutableList<Song> = mutableListOf()
-                // grab "name", duration "duration_ms", "artists" "name" (nested)
-                for (i in 0 until tracks.length()) {
-                    val track = tracks.getJSONObject(i)
-                    Log.i(TAG, "test iterate: $track")
-                    Log.i(TAG, "track name: ${track.getString("name")}")
-                    Log.i(TAG, "duration: ${track.getInt("duration_ms")}")
-                    Log.i(TAG, "song id: ${track.getString("id")}")
-                    val artistObj = track.getJSONArray("artists")
+        val reader  = InputStreamReader(inputStream)
+        var tracks: JSONArray
+        reader.use {
+            val json = JSONObject(it.readText())
+            tracks = json.getJSONObject("tracks").getJSONArray("items")
+            Log.i(TAG, "search results: $tracks")
+        }
+        var songResults: MutableList<Song> = mutableListOf()
+        for (i in 0 until tracks.length()) {
+            val track = tracks.getJSONObject(i)
+            val artistObj = track.getJSONArray("artists")
 
-                    var artistName = artistObj.getJSONObject(0).getString("name")
-                    for (j in 1 until artistObj.length()) {
-                        artistName += ", " + artistObj.getJSONObject(j).getString("name")
-                    }
-                    Log.i(TAG, "artist: $artistName")
-
-                    // missing id rn
-                    val trackData = Song(
-                        track.getString("name"),
-                        artistName,
-                        "",
-                        track.getInt("duration_ms").toString()
-                    )
-                    songResults.add(trackData)
-                }
-                Log.i(TAG, songResults.toString())
-            } catch(error: Exception) {
-                Log.d(TAG, error.toString())
+            var artistName = artistObj.getJSONObject(0).getString("name")
+            for (j in 1 until artistObj.length()) {
+                artistName += ", " + artistObj.getJSONObject(j).getString("name")
             }
+            Log.i(TAG, "artist: $artistName")
+
+            val trackData = Song(
+                track.getString("name"),
+                artistName,
+                "", //TODO
+                track.getInt("duration_ms").toString(),
+                track.getString("id")
+            )
+            songResults.add(trackData)
         }
+        Log.i(TAG, songResults.toString())
+//        displayResults(songResults.toList())
+        return songResults.toList()
 
     }
 
-    private fun displayResults(trackList: MutableList<Song>) {
-        this.runOnUiThread{
-            val listView = findViewById<ListView>(R.id.listView)
-//            listView.adapter = PlaylistAdapter(trackList)
-        }
+    override fun onSongClick(song: Song) {
+        Log.i(TAG, "song clicked")
+        TODO("Not yet implemented")
     }
+
+//    private fun displayResults(trackList: List<Song>) {
+//        this.runOnUiThread{
+//
+//            val listView = findViewById<ListView>(R.id.listView)
+//
+//            listView.adapter = PlaylistAdapter(trackList, this )
+//        }
+//    }
 }
 
 class SearchResultsAdapter(private val trackList: List<Song>): BaseAdapter() {
