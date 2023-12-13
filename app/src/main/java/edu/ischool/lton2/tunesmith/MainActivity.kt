@@ -1,6 +1,8 @@
 package edu.ischool.lton2.tunesmith
 
+import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -54,11 +56,13 @@ class MainActivity : AppCompatActivity() {
             when (it.itemId) {
                 R.id.nav_home -> {
                     val homeIntent = Intent(this, HomeActivity::class.java)
+                    Log.i("Navigation", "home button pressed")
                     startActivity(homeIntent)
                     true
                 }
                 R.id.nav_search -> {
                     val searchIntent = Intent(this, SearchActivity::class.java)
+                    Log.i("Navigation", "search button pressed")
                     startActivity(searchIntent)
                     true
                 }
@@ -135,9 +139,7 @@ class MainActivity : AppCompatActivity() {
             override fun onConnected(p0: SpotifyAppRemote?) {
                 (application as SpotifyConnection).connection = p0
                 Log.i(TAG, "Connection Successful")
-//                connected()
                 // TODO: send user to home screen activity
-//                val homeIntent = Intent(mainActivity, PlaylistViewActivity::class.java)
                 val homeIntent = Intent(mainActivity, HomeActivity::class.java)
                 startActivity(homeIntent)
 
@@ -151,7 +153,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun connected() {
         // Then we will write some more code here.
-        (application as SpotifyConnection).getConn()?.let {
+        (this as SpotifyConnection).getConn()?.let {
             val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
             it.playerApi.play(playlistURI)
             // Subscribe to PlayerState
@@ -162,11 +164,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        Log.i(TAG, "disconnected Spotify App Remote")
+    override fun onStop() {
+        super.onStop()
+
         (application as SpotifyConnection).getConn()?.let {
             SpotifyAppRemote.disconnect(it)
         }
-        super.onDestroy()
+    }
+}
+
+interface NavBar {
+    fun setupNav(activity: Activity, checkedItemValue: Int) {
+        val bottomNav = activity.findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
+        bottomNav.selectedItemId = checkedItemValue
+        bottomNav.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home -> {
+                    val homeIntent = Intent(activity, HomeActivity::class.java)
+                    activity.startActivity(homeIntent)
+                    true
+                }
+                R.id.nav_search -> {
+                    val searchIntent = Intent(activity, SearchActivity::class.java)
+                    activity.startActivity(searchIntent)
+                    true
+                }
+                else -> {true}
+            }
+
+        }
     }
 }

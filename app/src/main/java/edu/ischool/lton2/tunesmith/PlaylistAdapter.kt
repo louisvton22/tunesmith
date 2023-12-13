@@ -1,12 +1,11 @@
 package edu.ischool.lton2.tunesmith
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.TextView
+
 
 class PlaylistAdapter(private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
 
@@ -38,10 +37,6 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
 
         viewHolder.songTitle.text = song.title
         viewHolder.songArtist.text = song.artist
-
-        view.setOnClickListener {
-            onSongClickListener.onSongClick(song)
-        }
 
         return view
     }

@@ -1,29 +1,29 @@
 package edu.ischool.lton2.tunesmith
 
+import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.spotify.android.appremote.api.PlayerApi
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
 
-class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickListener {
-
+class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSongClickListener { //?
     private val TAG = "PlaylistActivity"
     private var currentlyPlaying = ""
     private var subscription:Subscription<PlayerState>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
+
+        this.setupNav(this, R.id.nav_search)
         val listView = findViewById<ListView>(R.id.list_view)
 
         val playlistAdapter = PlaylistAdapter(playlistExample.songs, this)
@@ -31,6 +31,7 @@ class PlaylistViewActivity : AppCompatActivity(), PlaylistAdapter.OnSongClickLis
         listView.adapter = playlistAdapter
 
     }
+
 
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
@@ -98,25 +99,18 @@ data class Song(
 
 val example  = listOf<Song>(
     Song (
-        "Disco Man",
-        "Remi Wolf",
+        "song1",
+        "artist1",
         "image1",
         "length1",
-        "spotify:track:0T7aTl1t15HKHfwep4nANV"
+        "id1"
     ),
     Song (
-        "Rush",
-        "Troye Sivan",
+        "song2",
+        "artist2",
         "image2",
         "length2",
-        "spotify:track:3xIMkM5LgbVDkpO74O3Np3"
-    ),
-    Song (
-        "Bounce",
-        "Emotional Oranges",
-        "image3",
-        "length3",
-        "spotify:track:3qptm6j356NV9FOJri6OgZ"
+        "id2"
     )
 )
 
