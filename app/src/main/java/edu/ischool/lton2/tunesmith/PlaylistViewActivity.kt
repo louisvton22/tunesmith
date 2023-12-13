@@ -83,14 +83,15 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                 recSongs.add(trackData)
 
             }
+            this.runOnUiThread {
+                Log.i(TAG, "Inflating listview")
+                val listView = findViewById<ListView>(R.id.list_view)
+
+                val playlistAdapter = PlaylistAdapter(recSongs, this)
+
+                listView.adapter = playlistAdapter
+            }
         }
-
-        val listView = findViewById<ListView>(R.id.list_view)
-
-        val playlistAdapter = PlaylistAdapter(recSongs, this)
-
-        listView.adapter = playlistAdapter
-
     }
 
 

@@ -164,12 +164,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
+    override fun onDestroy() {
         (application as SpotifyConnection).getConn()?.let {
             SpotifyAppRemote.disconnect(it)
         }
+        super.onDestroy()
     }
 }
 

@@ -56,7 +56,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
                 val playlistIntent = Intent(this, PlaylistViewActivity::class.java)
                 val bundle = Bundle()
                 val trackSeeds = selectedSongs.map { song ->
-                    song.id
+                    song.id.replace("spotify:track:", "")
                 }
                 bundle.putStringArrayList("Songs", ArrayList(trackSeeds))
                 playlistIntent.putExtras(bundle)
