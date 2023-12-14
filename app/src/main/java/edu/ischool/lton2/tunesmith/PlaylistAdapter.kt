@@ -62,13 +62,15 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
             }
         }
         if (song.selected) {
-            view.setBackgroundColor(Color.parseColor("#1DB954"))
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+            view.setBackgroundColor(Color.DKGRAY)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.WHITE)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
         } else {
-            view.setBackgroundColor(Color.parseColor("#212121"))
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            view.setBackgroundColor(Color.TRANSPARENT)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.GRAY)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
         }
         view.setOnClickListener {
             onSongClickListener.onSongClick(song)

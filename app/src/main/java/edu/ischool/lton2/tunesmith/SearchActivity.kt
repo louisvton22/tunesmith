@@ -207,16 +207,23 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         val ogBgColor = (view.rootView.background as ColorDrawable).color
         val ogTxtColor = this.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
         if (!selectedSongs.contains(song)) {
-            view.setBackgroundColor(Color.parseColor("#1DB954"))
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+//            view.setBackgroundColor(Color.parseColor("#1DB954"))
+            view.setBackgroundColor(Color.DKGRAY)
+//            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
+//            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.WHITE)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = true
             selectedSongs.add(song)
             Log.i(TAG, "Song selected: ${song.title}")
         } else {
-            view.setBackgroundColor(ogBgColor)
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            view.setBackgroundColor(Color.TRANSPARENT)
+//            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
+//            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.GRAY)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = false
             selectedSongs.remove(song)
             Log.i(TAG, "Song deselected: ${song.title}")
