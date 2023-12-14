@@ -112,7 +112,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                 Log.i(TAG, "Inflating listview")
                 val listView = findViewById<ListView>(R.id.list_view)
 
-                val playlistAdapter = PlaylistAdapter(recSongs, this)
+                val playlistAdapter = PlaylistAdapter(this, recSongs, this)
 
                 listView.adapter = playlistAdapter
             }

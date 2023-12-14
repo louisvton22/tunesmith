@@ -1,6 +1,7 @@
 package edu.ischool.lton2.tunesmith
 
 
+import android.app.Activity
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -17,7 +18,7 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 
-class PlaylistAdapter(private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
+class PlaylistAdapter(private val context: Activity, private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
     val networkThread = Executors.newSingleThreadExecutor()
     interface OnSongClickListener {
         fun onSongClick(song: Song)
@@ -55,11 +56,14 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
         networkThread.execute{
             try {
                 image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
+
             } catch(e: Exception) {
                 Log.e("PlaylistAdapter", e.toString())
             }
+            context.runOnUiThread {
+                viewHolder.image.setImageBitmap(image)
+            }
         }
-        viewHolder.image.setImageBitmap(image)
         if (song.selected) {
             view.setBackgroundColor(Color.DKGRAY)
             view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)

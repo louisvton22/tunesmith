@@ -151,7 +151,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
         this.runOnUiThread{
             val listView = findViewById<ListView>(R.id.listView)
-            listView.adapter = PlaylistAdapter(selectedSongs.toList() + tracklist, item)
+            listView.adapter = PlaylistAdapter(this, selectedSongs.toList() + tracklist, item)
         }
         return songResults.toList()
 
