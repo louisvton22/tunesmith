@@ -88,7 +88,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     track.getString("name"),
                     artistName,
                     smallImageObj.getString("url"),
-                    track.getInt("duration_ms").toString(),
+                    track.getInt("duration_ms"),
                     "spotify:track:${track.getString("id")}",
                     false
                 )
@@ -206,7 +206,7 @@ data class Song(
     val title: String,
     val artist: String,
     val cover: String,
-    val length: String,
+    val length: Int,
     val id: String,
     var selected: Boolean //determines whether the song should be highlighted or not
     )
@@ -216,7 +216,7 @@ val example  = listOf<Song>(
         "song1",
         "artist1",
         "image1",
-        "length1",
+        20000,
         "spotify:track:0T7aTl1t15HKHfwep4nANV",
         false
     ),
@@ -224,7 +224,7 @@ val example  = listOf<Song>(
         "song2",
         "artist2",
         "image2",
-        "length2",
+        400000,
         "spotify:track:3xIMkM5LgbVDkpO74O3Np3",
         false
     ),
@@ -232,7 +232,7 @@ val example  = listOf<Song>(
         "Bounce",
         "Emotional Oranges",
         "image3",
-        "length3",
+        50000,
         "spotify:track:3qptm6j356NV9FOJri6OgZ",
         false
     )

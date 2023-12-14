@@ -48,6 +48,7 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
 
         viewHolder.songTitle.text = song.title
         viewHolder.songArtist.text = song.artist
+        viewHolder.duration.text = formatTime(song.length)
         val imgURL = URL(song.cover)
         var image: Bitmap
 //            BitmapFactory.decodeResource(Resources.getSystem(), R.drawable.music_note)
@@ -79,5 +80,14 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
         val songTitle = view.findViewById<TextView>(R.id.songTitle)
         val songArtist = view.findViewById<TextView>(R.id.songArtist)
         val image = view.findViewById<ImageView>(R.id.songImg)
+        val duration = view.findViewById<TextView>(R.id.songLength)
     }
+}
+
+fun formatTime(milliseconds: Int) : String {
+    // example durations 222025, 184248, 162569
+    val totalSeconds = milliseconds / 1000
+    val minutes = totalSeconds / 60
+    val remainder = if (totalSeconds % 60 < 10)  "0${totalSeconds % 60}" else totalSeconds % 60
+    return "$minutes:$remainder"
 }
