@@ -253,7 +253,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     val byteArray = byteArrayOutputStream.toByteArray()
                     var encoded = Base64.encodeToString(byteArray, Base64.DEFAULT)
                     encoded = encoded.replace("\n", "").replace("\r", "")
-                    //Log.i(TAG, encoded)
+                    Log.i(TAG, "Encoded file size: ${encoded.toByteArray().size}")
 
                     val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
                     outputStreamWriter.write(encoded)
