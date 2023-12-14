@@ -1,15 +1,19 @@
 package edu.ischool.lton2.tunesmith
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.edit
 import androidx.recyclerview.widget.GridLayoutManager
@@ -53,12 +57,12 @@ class HomeActivity : AppCompatActivity(), NavBar {
         var recyclerView = findViewById<RecyclerView>(R.id.recHistory)
         var layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf())
+        recyclerView.adapter = SongAdapter(listOf(), this)
 
         recyclerView = findViewById<RecyclerView>(R.id.recRecommends)
         layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf())
+        recyclerView.adapter = SongAdapter(listOf(), this)
 
         var builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
             spotifyConnection.clientId,
@@ -155,7 +159,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
     }
 
 
-    data class Song(val name: String, val artists: String, val trackId: String)
+    data class Song(val name: String, val artists: String, val trackId: String, val cover: String = "")
 
     // Set up home screen for TuneSmith
     fun setupHomeUI() {
@@ -182,10 +186,15 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 for (i in 0 until tracks.length()) {
                     val track = tracks.getJSONObject(i).getJSONObject("track")
                     Log.i(TAG, "track name: ${track.getString("name")}")
+
+                    var smallImageObj= track.getJSONObject("album")
+                        .getJSONArray("images")
+                        .getJSONObject(1)
                     val song = Song(
                         track.getString("name"),
                         track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                        track.getString("id")
+                        track.getString("id"),
+                        smallImageObj.getString("url")
                     )
                     recentSongs.add(song)
 
@@ -194,7 +203,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
             // inflate listen history carousel
             this.runOnUiThread {
                 Log.i(TAG, "inflating history carousel")
-                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs, this)
             }
 
             // inflate recommended songs carousel
@@ -224,27 +233,32 @@ class HomeActivity : AppCompatActivity(), NavBar {
         for (i in 0 until tracks.length()) {
             val track = tracks.getJSONObject(i)
             Log.i(TAG, "track name: ${track.getString("name")}")
+            var smallImageObj= track.getJSONObject("album")
+                .getJSONArray("images")
+                .getJSONObject(1)
             val song = Song(
                 track.getString("name"),
                 track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                track.getString("id")
+                track.getString("id"),
+                smallImageObj.getString("url")
             )
             recentSongs.add(song)
 
         }
             this.runOnUiThread {
                 findViewById<TextView>(R.id.txtRec).text =
-                    "Here are some recommended songs based on your listening history"
+                    "Recommended songs based on your listening history"
                 findViewById<TextView>(R.id.txtRec).visibility = View.VISIBLE
                 Log.i(TAG, "inflating recommended carousel")
-                findViewById<RecyclerView>(R.id.recRecommends).adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recRecommends).adapter = SongAdapter(recentSongs, this)
             }
     }
 
-    class SongAdapter(private val songs: List<Song>) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
+    class SongAdapter(private val songs: List<Song>, private val context: Activity) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
         class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val textTitle: TextView = itemView.findViewById(R.id.textTitle)
             val textArtist: TextView = itemView.findViewById(R.id.textArtist)
+            val image = itemView.findViewById<ImageView>(R.id.trackCover)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -256,6 +270,20 @@ class HomeActivity : AppCompatActivity(), NavBar {
             val song = songs[position]
             holder.textArtist.text = song.artists
             holder.textTitle.text = song.name
+            val imgURL = URL(song.cover)
+            var image: Bitmap
+            val networkThread = Executors.newSingleThreadExecutor() // is it ok to make another one?
+            networkThread.execute{
+                try {
+                    image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
+                    this.context.runOnUiThread {
+                        holder.image.setImageBitmap(image)
+                    }
+
+                } catch(e: Exception) {
+                    Log.e("PlaylistAdapter", e.toString())
+                }
+            }
         }
         override fun getItemCount(): Int {
             return songs.size

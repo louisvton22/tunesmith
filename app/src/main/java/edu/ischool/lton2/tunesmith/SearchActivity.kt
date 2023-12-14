@@ -132,7 +132,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
 
             var smallImageObj= track.getJSONObject("album")
                 .getJSONArray("images")
-                .getJSONObject(2)
+                .getJSONObject(1)
             Log.i(TAG, smallImageObj.getString("url"))
             val trackData = Song(
                 track.getString("name"),

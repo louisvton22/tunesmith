@@ -147,7 +147,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                             pausePlayer()
                         }
                     }
-                }, 500)
+                }, 800)
             }
 
         }
