@@ -49,16 +49,15 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
         viewHolder.songTitle.text = song.title
         viewHolder.songArtist.text = song.artist
         val imgURL = URL(song.cover)
-        var image: Bitmap
-//            BitmapFactory.decodeResource(Resources.getSystem(), R.drawable.music_note)
+        var image=BitmapFactory.decodeResource(Resources.getSystem(), R.drawable.music_note)
         networkThread.execute{
             try {
                 image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
-                viewHolder.image.setImageBitmap(image)
             } catch(e: Exception) {
                 Log.e("PlaylistAdapter", e.toString())
             }
         }
+        viewHolder.image.setImageBitmap(image)
         if (song.selected) {
             view.setBackgroundColor(Color.parseColor("#1DB954"))
             view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
