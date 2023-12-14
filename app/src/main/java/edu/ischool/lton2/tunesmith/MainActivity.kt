@@ -1,6 +1,8 @@
 package edu.ischool.lton2.tunesmith
 
+import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -54,11 +56,13 @@ class MainActivity : AppCompatActivity() {
             when (it.itemId) {
                 R.id.nav_home -> {
                     val homeIntent = Intent(this, HomeActivity::class.java)
+                    Log.i("Navigation", "home button pressed")
                     startActivity(homeIntent)
                     true
                 }
                 R.id.nav_search -> {
                     val searchIntent = Intent(this, SearchActivity::class.java)
+                    Log.i("Navigation", "search button pressed")
                     startActivity(searchIntent)
                     true
                 }
@@ -165,6 +169,29 @@ class MainActivity : AppCompatActivity() {
 
         (application as SpotifyConnection).getConn()?.let {
             SpotifyAppRemote.disconnect(it)
+        }
+    }
+}
+
+interface NavBar {
+    fun setupNav(activity: Activity, checkedItemValue: Int) {
+        val bottomNav = activity.findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
+        bottomNav.selectedItemId = checkedItemValue
+        bottomNav.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.nav_home -> {
+                    val homeIntent = Intent(activity, HomeActivity::class.java)
+                    activity.startActivity(homeIntent)
+                    true
+                }
+                R.id.nav_search -> {
+                    val searchIntent = Intent(activity, SearchActivity::class.java)
+                    activity.startActivity(searchIntent)
+                    true
+                }
+                else -> {true}
+            }
+
         }
     }
 }

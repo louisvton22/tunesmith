@@ -3,9 +3,13 @@ package edu.ischool.lton2.tunesmith
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
@@ -19,6 +23,9 @@ import android.widget.SearchView
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.spotify.protocol.client.Subscription
+import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Track
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import org.json.JSONArray
@@ -26,30 +33,17 @@ import org.json.JSONObject
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.reflect.typeOf
 
-//TODO: Delete when done
-val layoutTester  = listOf<Song>(
-    Song (
-        "song1",
-        "artist1",
-        "image1",
-        "length1"
-    ),
-    Song (
-        "song2",
-        "artist2",
-        "image2",
-        "length2"
-    )
-)
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener, NavBar{
     private val TAG = "SearchActivity"
-    lateinit var bottomNav : BottomNavigationView
-
+    var subscription: Subscription<PlayerState>? = null
+    var currentlyPlaying: String = ""
     lateinit var spotifyConnection: SpotifyConnection
     lateinit var sharedPref: SharedPreferences
+    var selectedSongs: MutableList<Song> = mutableListOf()
 
     val networkThread = Executors.newSingleThreadExecutor()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,158 +53,169 @@ class SearchActivity : AppCompatActivity() {
 
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
-
-        bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationBar)
-        bottomNav.setOnItemSelectedListener {
-            when (it.itemId) {
-                R.id.nav_home -> {
-                    val homeIntent = Intent(this, HomeActivity::class.java)
-                    startActivity(homeIntent)
-                    true
-                }
-                R.id.nav_search -> {
-                    val searchIntent = Intent(this, SearchActivity::class.java)
-                    startActivity(searchIntent)
-                    true
-                }
-                else -> {true}
-            }
-
-        }
         Log.i(TAG, "search activity created")
 
-        val songListView = findViewById<ListView>(R.id.listView)
-        val searchAdapter = SearchResultsAdapter(layoutTester)
-        songListView.adapter = searchAdapter
+        this.setupNav(this, R.id.nav_search)
 
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        Log.i(TAG, "oncreateoptionsmenu")
+        var item = this
         menuInflater.inflate(R.menu.top_menu, menu)
 
         val searchViewItem = menu.findItem(R.id.search_bar)
         val searchView = searchViewItem.actionView as SearchView
-        searchView.queryHint = "Search for songs here"
-        Log.i(TAG, "searchView: " + searchView.toString())
 
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
-                Log.i(TAG, "submitted query")
-                searchSong("bkah")
+                var tracklist : List<Song> = listOf()
+                networkThread.execute{
+                    try {
+                        tracklist = searchSong(query, item)
+                    } catch (e: Exception) {
+                        Log.d(TAG, e.toString())
+                    }
+                }
                 Log.i(TAG, "searched")
                 return false
             }
 
-            override fun onQueryTextChange(newText: String): Boolean {
-                Log.i(TAG, "textchaange")
-//                adapter.filter.filter(newText)
+            override fun onQueryTextChange(p0: String?): Boolean {
                 return false
             }
+
         })
-        Log.i(TAG, "end of oncreateoptionsmenu")
         return super.onCreateOptionsMenu(menu)
     }
 
-    private fun searchSong(query: String) {
+    private fun searchSong(query: String, item: PlaylistAdapter.OnSongClickListener) : List<Song> {
         Log.i(TAG, "User token: ${sharedPref.getString("AccessToken", "")}")
-        val fillerQuery = "White Lie"
-        var searchUrl = URL("https://api.spotify.com/v1/search?q=$fillerQuery&type=track&limit=2")
+        val processedQuery = query.replace(" ", "+")
+        var searchUrl = URL("https://api.spotify.com/v1/search?q=$processedQuery&type=track&limit=20")
 
-        networkThread.execute{
-            try {
-                var urlConnection = searchUrl.openConnection() as HttpURLConnection
-                Log.i(TAG, "searching for tracks matching query")
-                urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
-                val checkAuth = urlConnection.getRequestProperty("Authorization")
-                Log.i(TAG, "check url auth token: ${checkAuth}")
+        var urlConnection = searchUrl.openConnection() as HttpURLConnection
+        urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+        val inputStream = urlConnection.inputStream
+        val reader  = InputStreamReader(inputStream)
 
-                val inputStream = urlConnection.inputStream
-
-                val reader  = InputStreamReader(inputStream)
-                var tracks: JSONArray
-                reader.use {
-                    val json = JSONObject(it.readText())
-                    tracks = json.getJSONObject("tracks").getJSONArray("items")
-                    Log.i(TAG, "search results: $tracks")
-                }
-                var songResults: MutableList<Song> = mutableListOf()
-                // grab "name", duration "duration_ms", "artists" "name" (nested)
-                for (i in 0 until tracks.length()) {
-                    val track = tracks.getJSONObject(i)
-                    Log.i(TAG, "test iterate: $track")
-                    Log.i(TAG, "track name: ${track.getString("name")}")
-                    Log.i(TAG, "duration: ${track.getInt("duration_ms")}")
-                    Log.i(TAG, "song id: ${track.getString("id")}")
-                    val artistObj = track.getJSONArray("artists")
-
-                    var artistName = artistObj.getJSONObject(0).getString("name")
-                    for (j in 1 until artistObj.length()) {
-                        artistName += ", " + artistObj.getJSONObject(j).getString("name")
-                    }
-                    Log.i(TAG, "artist: $artistName")
-
-                    // missing id rn
-                    val trackData = Song(
-                        track.getString("name"),
-                        artistName,
-                        "",
-                        track.getInt("duration_ms").toString()
-                    )
-                    songResults.add(trackData)
-                }
-                Log.i(TAG, songResults.toString())
-            } catch(error: Exception) {
-                Log.d(TAG, error.toString())
-            }
+        var tracks: JSONArray
+        reader.use {
+            val json = JSONObject(it.readText())
+            tracks = json.getJSONObject("tracks").getJSONArray("items")
+            Log.i(TAG, "search results: $tracks")
         }
+        var songResults: MutableList<Song> = mutableListOf()
+        for (i in 0 until tracks.length()) {
+            val track = tracks.getJSONObject(i)
+            val artistObj = track.getJSONArray("artists")
 
-    }
+            var artistName = artistObj.getJSONObject(0).getString("name")
+            for (j in 1 until artistObj.length()) {
+                artistName += ", " + artistObj.getJSONObject(j).getString("name")
+            }
+            Log.i(TAG, "artist: $artistName")
 
-    private fun displayResults(trackList: MutableList<Song>) {
+            var smallImageObj= track.getJSONObject("album")
+                .getJSONArray("images")
+                .getJSONObject(1)
+            Log.i(TAG, smallImageObj.getString("url"))
+            val trackData = Song(
+                track.getString("name"),
+                artistName,
+                smallImageObj.getString("url"),
+                track.getInt("duration_ms").toString(),
+                "spotify:track:${track.getString("id")}",
+                false
+            )
+            songResults.add(trackData)
+        }
+        Log.i(TAG, songResults.toString())
+        val tracklist = songResults.toList()
+
         this.runOnUiThread{
             val listView = findViewById<ListView>(R.id.listView)
-//            listView.adapter = PlaylistAdapter(trackList)
+            listView.adapter = PlaylistAdapter(selectedSongs.toList() + tracklist, item)
         }
-    }
-}
+        return songResults.toList()
 
-class SearchResultsAdapter(private val trackList: List<Song>): BaseAdapter() {
-    override fun getCount(): Int {
-        return trackList.size
     }
 
-    override fun getItem(index: Int): Any {
-        return trackList.get(index)
-    }
+    override fun onSongClick(song: Song) {
+        Log.i(TAG, "song clicked")
+        Log.i(TAG, "${song.title} clicked")
+        Log.i(TAG, "$song click")
 
-    override fun getItemId(index: Int): Long {
-        //TODO: edit Song data class to have id
-        return index.toLong()
-    }
-
-    override fun getView(index: Int, convertView: View?, parent: ViewGroup?): View {
-        val track = getItem(index) as Song
-        val inflater = LayoutInflater.from(parent?.context)
-        val view = convertView ?: inflater.inflate(R.layout.list_items, parent, false)
-        val viewHolder : SongViewHolder
-
-        if (convertView == null) {
-            viewHolder = SongViewHolder(view)
-            view.tag = viewHolder
+        if(currentlyPlaying == song.title) {
+            // song currently playing, pause the song
+            pausePlayer()
+            currentlyPlaying = ""
         } else {
-            viewHolder = convertView.tag as SongViewHolder
+            currentlyPlaying = song.title
+            (application as SpotifyConnection).getConn()?.let { appRemote ->
+                val trackURI = song.id
+                Log.d("song id", trackURI)
+                // Set shuffle mode to OFF (optional)
+                appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
+                    Log.e(TAG, "Set shuffle mode to OFF")
+                }
+                subscription?.cancel()
+                appRemote.playerApi.play(trackURI).setResultCallback { _ ->
+                    Log.i(TAG, "Start new song")
+                    Handler().postDelayed({
+                        subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
+
+                            val track: Track = it.track
+                            Log.d(
+                                "PlaylistActivity",
+                                track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                            )
+                            if (track.uri != trackURI) {
+                                // Song has changed, pause the player
+                                pausePlayer()
+                            }
+                        }
+                    }, 500)
+                }
+
+            }
+        }
+    }
+
+    //highlight songs selected to generate new playlist
+    override fun onSongSelected(song: Song, view: View) {
+        // select songs if they are not already in selected category
+        val typedValue = TypedValue()
+        val ogBgColor = (view.rootView.background as ColorDrawable).color
+        val ogTxtColor = this.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+        if (!selectedSongs.contains(song)) {
+            view.setBackgroundColor(Color.parseColor("#1DB954"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+            song.selected = true
+            selectedSongs.add(song)
+        } else {
+            view.setBackgroundColor(ogBgColor)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            song.selected = false
+            selectedSongs.remove(song)
         }
 
-        viewHolder.songTitle.text = track.title
-        viewHolder.songArtist.text = track.artist
-
-        return view
     }
-    class SongViewHolder(view: View) {
-        val songTitle = view.findViewById<TextView>(R.id.songTitle)
-        val songArtist = view.findViewById<TextView>(R.id.songArtist)
+    private fun pausePlayer() {
+        (application as SpotifyConnection).getConn()?.let { appRemote ->
+            appRemote.playerApi.pause().setResultCallback { _ ->
+                Log.e(TAG, "Paused playback after one song")
+            }
+        }
+        subscription?.cancel()
     }
-
 
 }
+
+
+
+
+
+
+
