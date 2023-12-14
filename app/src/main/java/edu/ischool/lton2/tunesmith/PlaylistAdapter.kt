@@ -5,6 +5,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -64,6 +65,10 @@ class PlaylistAdapter(private val songs: List<Song>, private val onSongClickList
             view.setBackgroundColor(Color.parseColor("#1DB954"))
             view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
             view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+        } else {
+            view.setBackgroundColor(Color.parseColor("#212121"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
         }
         view.setOnClickListener {
             onSongClickListener.onSongClick(song)

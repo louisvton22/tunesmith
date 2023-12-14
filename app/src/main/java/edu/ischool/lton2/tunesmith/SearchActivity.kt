@@ -195,6 +195,11 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        subscription?.cancel()
+    }
+
     //highlight songs selected to generate new playlist
     override fun onSongSelected(song: Song, view: View) {
         // select songs if they are not already in selected category
