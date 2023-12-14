@@ -13,7 +13,13 @@ import androidx.recyclerview.widget.RecyclerView
 import java.net.URL
 import java.util.concurrent.Executors
 
-class SongAdapter(private val songs: List<HomeActivity.Song>, private val context: Activity) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
+class SongAdapter(private val songs: List<HomeActivity.Song>,
+                  private val context: Activity,
+                  private val onSongClickListener: OnSongClickListener)
+    : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
+    interface OnSongClickListener {
+        fun onSongClick(song: HomeActivity.Song)
+    }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textTitle: TextView = itemView.findViewById(R.id.textTitle)
         val textArtist: TextView = itemView.findViewById(R.id.textArtist)
@@ -29,6 +35,9 @@ class SongAdapter(private val songs: List<HomeActivity.Song>, private val contex
         val song = songs[position]
         holder.textArtist.text = song.artists
         holder.textTitle.text = song.name
+        holder.itemView.setOnClickListener {
+            onSongClickListener.onSongClick(song)
+        }
         val imgURL = URL(song.cover)
         var image: Bitmap
         val networkThread = Executors.newSingleThreadExecutor() // is it ok to make another one?

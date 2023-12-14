@@ -249,7 +249,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     //Log.i(TAG, playlist?.image)
                     val bitmap = BitmapFactory.decodeFile(playlist?.image)
                     val byteArrayOutputStream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
                     val byteArray = byteArrayOutputStream.toByteArray()
                     var encoded = Base64.encodeToString(byteArray, Base64.DEFAULT)
                     encoded = encoded.replace("\n", "").replace("\r", "")
