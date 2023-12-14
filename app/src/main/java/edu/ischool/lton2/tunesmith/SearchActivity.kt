@@ -128,7 +128,6 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             for (j in 1 until artistObj.length()) {
                 artistName += ", " + artistObj.getJSONObject(j).getString("name")
             }
-            Log.i(TAG, "artist: $artistName")
 
             var smallImageObj= track.getJSONObject("album")
                 .getJSONArray("images")
@@ -138,7 +137,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
                 track.getString("name"),
                 artistName,
                 smallImageObj.getString("url"),
-                track.getInt("duration_ms").toString(),
+                track.getInt("duration_ms"),
                 "spotify:track:${track.getString("id")}",
                 false
             )
