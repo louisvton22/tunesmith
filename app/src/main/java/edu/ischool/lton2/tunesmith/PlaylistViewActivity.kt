@@ -10,25 +10,32 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Parcel
 import android.os.Parcelable
+import android.provider.ContactsContract.Data
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedOutputStream
+import java.io.DataOutputStream
 import java.io.File
 import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 
 class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSongClickListener { //?
@@ -36,16 +43,24 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
     private var currentlyPlaying = ""
     private var subscription:Subscription<PlayerState>? = null
     lateinit var sharedPref : SharedPreferences
+    lateinit var recSongs: MutableList<Song>
+    var playlistId: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
         //this.setupNav(this, R.id.nav_search)
 
+        val btnUpload = findViewById<Button>(R.id.btnUpload)
+        btnUpload.text = "Upload Playlist to Spotify"
+        btnUpload.setOnLongClickListener{
+            uploadPlaylist()
+            true}
+
         // inflate playlist with user title, image, and desc
         inflatePlaylist()
 
-        var recSongs: MutableList<Song> = mutableListOf()
+        recSongs = mutableListOf()
         //get recommended songs
         var seedSongs = intent.extras?.getStringArrayList("Songs")?.toMutableList()
         Log.i(TAG, seedSongs.toString())
@@ -107,13 +122,105 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
     }
 
     fun inflatePlaylist() {
+
         val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
-        val imageFile = File(playlist?.image)
-        findViewById<ImageView>(R.id.imgTV).setImageURI(Uri.fromFile(imageFile))
+        if (playlist?.image?.isNotEmpty()!!) {
+            val imageFile = File(playlist?.image)
+            findViewById<ImageView>(R.id.imgTV).setImageURI(Uri.fromFile(imageFile))
+        }
         findViewById<TextView>(R.id.titleTV).text = playlist?.name
         findViewById<TextView>(R.id.descriptionTV).text = playlist?.description
     }
 
+    fun uploadPlaylist() {
+        val apiUrl = URL("https://api.spotify.com/v1/users/${sharedPref.getString("UserID", "")}/playlists")
+        Log.i(TAG, "$apiUrl")
+        Executors.newSingleThreadExecutor().execute {
+            try {
+                val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+                urlConnection.requestMethod = "POST"
+                urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+                urlConnection.setRequestProperty("Content-Type", "application/json")
+                urlConnection.setRequestProperty("Accept", "application/json")
+                urlConnection.setRequestProperty("charset", "utf-8")
+
+                urlConnection.doInput = true
+                urlConnection.doOutput = true
+
+                val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+                val postJson = JSONObject()
+                postJson.put("name",playlist?.name)
+                postJson.put("description", playlist?.description)
+                postJson.put("public", false)
+                Log.i(TAG, "Json $postJson")
+
+                val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+                outputStreamWriter.write(postJson.toString())
+                outputStreamWriter.flush()
+
+                Log.i(TAG, "${urlConnection.responseCode}")
+                val inputStream = urlConnection.inputStream
+                Log.i(TAG, "request success")
+                val reader = InputStreamReader(inputStream)
+                reader.use {
+                    val respJson = JSONObject(it.readText())
+                    Log.i(TAG, "json : $respJson")
+                    playlistId = respJson.getString("id")
+                    Log.i(TAG, "Playlist id: $playlistId")
+                }
+
+                Log.i(TAG, "Adding songs to playlist")
+                // add songs to the playlist
+                addSongs()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error on network thread")
+            }
+        }
+    }
+
+    private fun addSongs() {
+        val apiUrl = URL("https://api.spotify.com/v1/playlists/${playlistId}/tracks")
+        try {
+            val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+            urlConnection.requestMethod = "POST"
+            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+            urlConnection.setRequestProperty("Content-Type", "application/json")
+            urlConnection.setRequestProperty("Accept", "application/json")
+            urlConnection.setRequestProperty("charset", "utf-8")
+
+            urlConnection.doInput = true
+            urlConnection.doOutput = true
+
+            val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+            val postJson = JSONObject()
+            val songUris = recSongs.map { song ->
+                song.id.replace("spotify:track:", "")
+            }
+            Log.i(TAG, "Json ${JSONArray(songUris)}")
+            postJson.put("uris", JSONArray(songUris))
+            Log.i(TAG, "$postJson")
+
+            val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+            outputStreamWriter.write(postJson.toString())
+            outputStreamWriter.flush()
+
+            Log.i(TAG, "${urlConnection.responseCode}")
+            val inputStream = urlConnection.inputStream
+            Log.i(TAG, "request success")
+            val reader = InputStreamReader(inputStream)
+            reader.use {
+                val respJson = JSONObject(it.readText())
+                Log.i(TAG, "response json: $respJson")
+            }
+
+            // give success message
+        } catch (e: Exception) {
+            Log.e(TAG, "Error on network thread ${e.message}")
+        }
+    }
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")
         Log.i(TAG, "$song click")
