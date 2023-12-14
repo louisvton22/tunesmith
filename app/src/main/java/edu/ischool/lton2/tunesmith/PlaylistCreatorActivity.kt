@@ -157,6 +157,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
 
             val columnIndex = cursor.getColumnIndex(filePathColumn[0])
             val picturePath = cursor.getString(columnIndex)
+            Log.i("photo select activity", "before cursor.close()")
             cursor.close()
             picture = picturePath
             val bitmap = BitmapFactory.decodeFile(picturePath)
