@@ -26,8 +26,9 @@ import com.spotify.protocol.types.Track;
 
 class SpotifyConnection: Application() {
     var connection: SpotifyAppRemote? = null
-    val clientId = "23b30f0dcd494714b0fe85df516f4d02"
+//    val clientId = "23b30f0dcd494714b0fe85df516f4d02"
 //    val clientId = "fe16ad9abf314dcfa8e3d1f4eda5d367" //deemix client
+    val clientId= "ca61ae78395f45bf941fe67614da34b8" // Alena's app
     val redirectUri = "https://louis-ton.netlify.app/"
     private val TAG = "SpotifyConnection"
     override fun onCreate() {
