@@ -58,7 +58,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
                 val playlistViewIntent = Intent(this, PlaylistViewActivity::class.java)
                 val bundle = this.intent.extras
                 bundle?.putParcelable("Playlist", newPlaylist)
-                bundle?.putInt("nSongs", numberPicker.maxValue - numberPicker.value)
+                bundle?.putInt("nSongs", numberPicker.maxValue - numberPicker.value + 1)
                 Log.i("Creator", "${numberPicker.value} songs wanted")
                 playlistViewIntent.putExtras(bundle!!)
                 startActivity(playlistViewIntent)

@@ -1,22 +1,20 @@
 package edu.ischool.lton2.tunesmith
 
-import android.app.Person
-import android.content.ContentValues.TAG
+import android.R.attr
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Parcel
 import android.os.Parcelable
-import android.provider.ContactsContract.Data
+import android.util.Base64
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
@@ -24,21 +22,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedOutputStream
-import java.io.DataOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
+
 
 class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSongClickListener { //?
     private val TAG = "PlaylistActivity"
@@ -218,7 +214,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                 val respJson = JSONObject(it.readText())
                 Log.i(TAG, "response json: $respJson")
             }
-
+            replaceImage()
             // give success message
             this.runOnUiThread {
                 Toast.makeText(this, "Playlist Added!", Toast.LENGTH_SHORT).show()
@@ -227,6 +223,45 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
         } catch (e: Exception) {
             Log.e(TAG, "Error on network thread ${e.message}")
         }
+    }
+
+    private fun replaceImage() {
+
+            val apiUrl = URL("https://api.spotify.com/v1/playlists/$playlistId/images")
+            val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+            if (playlist?.image?.isNotEmpty()!!) {
+                Log.i(TAG, "Custom image detected, updating playlist image on Spotify")
+                try {
+                    val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+                    urlConnection.requestMethod = "PUT"
+                    urlConnection.setRequestProperty(
+                        "Authorization",
+                        "Bearer ${sharedPref.getString("AccessToken", "")}"
+                    )
+                    urlConnection.setRequestProperty("Content-Type", "image/jpeg")
+                    urlConnection.doOutput = true
+                    //Log.i(TAG, "REquest body: ${}")
+                    //val imageBytes = Files.readAllBytes(Paths.get(playlist?.image))
+                    //val encodedImage = Base64.getEncoder().encodeToString(imageBytes)
+                    Log.i(TAG, playlist?.image)
+                    val bitmap = BitmapFactory.decodeFile(playlist?.image)
+                    val byteArrayOutputStream = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                    val byteArray = byteArrayOutputStream.toByteArray()
+                    var encoded = Base64.encodeToString(byteArray, Base64.DEFAULT)
+                    encoded = encoded.replace("\n", "").replace("\r", "")
+                    Log.i(TAG, encoded)
+
+                    val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+                    outputStreamWriter.write(encoded)
+                    outputStreamWriter.flush()
+                    Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
+                    outputStreamWriter.close()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating image: ${e.message}")
+                }
+            }
     }
     override fun onSongClick(song: Song) {
         Log.i(TAG, "${song.title} clicked")

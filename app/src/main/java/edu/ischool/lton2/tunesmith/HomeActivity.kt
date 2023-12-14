@@ -78,7 +78,8 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 "playlist-read-private",
                 "user-read-recently-played",
                 "playlist-modify-public",
-                "playlist-modify-private"
+                "playlist-modify-private",
+                "ugc-image-upload"
             )
         )
 
