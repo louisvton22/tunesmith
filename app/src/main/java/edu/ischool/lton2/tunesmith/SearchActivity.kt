@@ -53,7 +53,9 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         val btnGetRec  = findViewById<Button>(R.id.btnGetRec)
         btnGetRec.text = "Get Recommended Songs"
         btnGetRec.setOnLongClickListener {
+            Log.i(TAG, "get recs clicked")
             if (selectedSongs.isNotEmpty()) {
+                Log.i(TAG, "Selected songs: $selectedSongs")
                 val playlistIntent = Intent(this, PlaylistCreatorActivity::class.java)
                 val bundle = Bundle()
                 val trackSeeds = selectedSongs.map { song ->

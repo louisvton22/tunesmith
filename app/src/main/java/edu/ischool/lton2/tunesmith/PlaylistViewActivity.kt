@@ -133,6 +133,8 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
     fun uploadPlaylist() {
         val apiUrl = URL("https://api.spotify.com/v1/users/${sharedPref.getString("UserID", "")}/playlists")
         Log.i(TAG, "$apiUrl")
+        Log.i(TAG, "shared preferences userid: ${sharedPref.getString("UserID", "")}")
+        Log.i(TAG, "shared prefs token: ${sharedPref.getString("AccessToken", "")}")
         Executors.newSingleThreadExecutor().execute {
             try {
                 val urlConnection = apiUrl.openConnection() as HttpURLConnection
