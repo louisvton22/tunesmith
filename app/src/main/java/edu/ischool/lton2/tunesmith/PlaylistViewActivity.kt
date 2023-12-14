@@ -84,19 +84,19 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             recSongs = mutableListOf()
             for (i in 0 until tracks.length()) {
                 val track = tracks.getJSONObject(i)
-                Log.i(TAG, "track name: ${track.getString("name")}")
+                //Log.i(TAG, "track name: ${track.getString("name")}")
                 val artistObj = track.getJSONArray("artists")
 
                 var artistName = artistObj.getJSONObject(0).getString("name")
                 for (j in 1 until artistObj.length()) {
                     artistName += ", " + artistObj.getJSONObject(j).getString("name")
                 }
-                Log.i(TAG, "artist: $artistName")
+                //Log.i(TAG, "artist: $artistName")
 
                 var smallImageObj= track.getJSONObject("album")
                     .getJSONArray("images")
                     .getJSONObject(2)
-                Log.i(TAG, smallImageObj.getString("url"))
+                //Log.i(TAG, smallImageObj.getString("url"))
                 val trackData = Song(
                     track.getString("name"),
                     artistName,
@@ -132,9 +132,9 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
 
     fun uploadPlaylist() {
         val apiUrl = URL("https://api.spotify.com/v1/users/${sharedPref.getString("UserID", "")}/playlists")
-        Log.i(TAG, "$apiUrl")
-        Log.i(TAG, "shared preferences userid: ${sharedPref.getString("UserID", "")}")
-        Log.i(TAG, "shared prefs token: ${sharedPref.getString("AccessToken", "")}")
+        //Log.i(TAG, "$apiUrl")
+        //Log.i(TAG, "shared preferences userid: ${sharedPref.getString("UserID", "")}")
+        //Log.i(TAG, "shared prefs token: ${sharedPref.getString("AccessToken", "")}")
         Executors.newSingleThreadExecutor().execute {
             try {
                 val urlConnection = apiUrl.openConnection() as HttpURLConnection
@@ -153,15 +153,15 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                 postJson.put("name",playlist?.name)
                 postJson.put("description", playlist?.description)
                 postJson.put("public", false)
-                Log.i(TAG, "Json $postJson")
+                //Log.i(TAG, "Json $postJson")
 
                 val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
                 outputStreamWriter.write(postJson.toString())
                 outputStreamWriter.flush()
 
-                Log.i(TAG, "${urlConnection.responseCode}")
+                //Log.i(TAG, "${urlConnection.responseCode}")
                 val inputStream = urlConnection.inputStream
-                Log.i(TAG, "request success")
+                //Log.i(TAG, "request success")
                 val reader = InputStreamReader(inputStream)
                 reader.use {
                     val respJson = JSONObject(it.readText())
@@ -170,7 +170,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     Log.i(TAG, "Playlist id: $playlistId")
                 }
 
-                Log.i(TAG, "Adding songs to playlist")
+                //Log.i(TAG, "Adding songs to playlist")
                 // add songs to the playlist
                 addSongs()
 
@@ -200,21 +200,21 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             val songUris = recSongs.map { song ->
                 song.id.replace("spotify:track:", "")
             }
-            Log.i(TAG, "Json ${JSONArray(songUris)}")
+            //Log.i(TAG, "Json ${JSONArray(songUris)}")
             postJson.put("uris", JSONArray(songUris))
-            Log.i(TAG, "$postJson")
+            //Log.i(TAG, "$postJson")
 
             val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
             outputStreamWriter.write(postJson.toString())
             outputStreamWriter.flush()
 
-            Log.i(TAG, "${urlConnection.responseCode}")
+            //Log.i(TAG, "${urlConnection.responseCode}")
             val inputStream = urlConnection.inputStream
-            Log.i(TAG, "request success")
+           // Log.i(TAG, "request success")
             val reader = InputStreamReader(inputStream)
             reader.use {
                 val respJson = JSONObject(it.readText())
-                Log.i(TAG, "response json: $respJson")
+                //Log.i(TAG, "response json: $respJson")
             }
             replaceImage()
             // give success message
@@ -246,19 +246,19 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     //Log.i(TAG, "REquest body: ${}")
                     //val imageBytes = Files.readAllBytes(Paths.get(playlist?.image))
                     //val encodedImage = Base64.getEncoder().encodeToString(imageBytes)
-                    Log.i(TAG, playlist?.image)
+                    //Log.i(TAG, playlist?.image)
                     val bitmap = BitmapFactory.decodeFile(playlist?.image)
                     val byteArrayOutputStream = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
                     val byteArray = byteArrayOutputStream.toByteArray()
                     var encoded = Base64.encodeToString(byteArray, Base64.DEFAULT)
                     encoded = encoded.replace("\n", "").replace("\r", "")
-                    Log.i(TAG, encoded)
+                    //Log.i(TAG, encoded)
 
                     val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
                     outputStreamWriter.write(encoded)
                     outputStreamWriter.flush()
-                    Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
+                    //Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
                     outputStreamWriter.close()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating image: ${e.message}")
@@ -266,8 +266,8 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             }
     }
     override fun onSongClick(song: Song) {
-        Log.i(TAG, "${song.title} clicked")
-        Log.i(TAG, "$song click")
+        //Log.i(TAG, "${song.title} clicked")
+        //Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
@@ -277,22 +277,22 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             currentlyPlaying = song.title
         (application as SpotifyConnection).getConn()?.let { appRemote ->
             val trackURI = song.id
-            Log.d("song id", trackURI)
+            //Log.d("song id", trackURI)
             // Set shuffle mode to OFF (optional)
             appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
                 Log.e(TAG, "Set shuffle mode to OFF")
             }
             subscription?.cancel()
             appRemote.playerApi.play(trackURI).setResultCallback { _ ->
-                Log.i(TAG, "Start new song")
+                //Log.i(TAG, "Start new song")
                 Handler().postDelayed({
                     subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
 
                         val track: Track = it.track
-                        Log.d(
-                            "PlaylistActivity",
-                            track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
-                        )
+                        //Log.d(
+                        //    "PlaylistActivity",
+                        //    track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                        //)
                         if (track.uri != trackURI) {
                             // Song has changed, pause the player
                             pausePlayer()

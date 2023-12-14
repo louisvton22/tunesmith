@@ -15,6 +15,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.NumberPicker
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -62,6 +63,8 @@ class PlaylistCreatorActivity: AppCompatActivity() {
                 Log.i("Creator", "${numberPicker.value} songs wanted")
                 playlistViewIntent.putExtras(bundle!!)
                 startActivity(playlistViewIntent)
+            } else {
+                Toast.makeText(this, "Please enter a playlist name", Toast.LENGTH_SHORT).show()
             }
         }
 

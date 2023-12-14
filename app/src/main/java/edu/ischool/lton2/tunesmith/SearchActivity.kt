@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -55,7 +56,6 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         btnGetRec.setOnLongClickListener {
             Log.i(TAG, "get recs clicked")
             if (selectedSongs.isNotEmpty()) {
-                Log.i(TAG, "Selected songs: $selectedSongs")
                 val playlistIntent = Intent(this, PlaylistCreatorActivity::class.java)
                 val bundle = Bundle()
                 val trackSeeds = selectedSongs.map { song ->
@@ -64,6 +64,8 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
                 bundle.putStringArrayList("Songs", ArrayList(trackSeeds))
                 playlistIntent.putExtras(bundle)
                 startActivity(playlistIntent)
+            } else {
+                Toast.makeText(this, "Select at least 1 song for recommendations", Toast.LENGTH_SHORT).show()
             }
             true
         }
@@ -134,7 +136,6 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             var smallImageObj= track.getJSONObject("album")
                 .getJSONArray("images")
                 .getJSONObject(1)
-            Log.i(TAG, smallImageObj.getString("url"))
             val trackData = Song(
                 track.getString("name"),
                 artistName,
@@ -157,9 +158,9 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     }
 
     override fun onSongClick(song: Song) {
-        Log.i(TAG, "song clicked")
-        Log.i(TAG, "${song.title} clicked")
-        Log.i(TAG, "$song click")
+//        Log.i(TAG, "song clicked")
+//        Log.i(TAG, "${song.title} clicked")
+//        Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
@@ -169,22 +170,22 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             currentlyPlaying = song.title
             (application as SpotifyConnection).getConn()?.let { appRemote ->
                 val trackURI = song.id
-                Log.d("song id", trackURI)
+                //Log.d("song id", trackURI)
                 // Set shuffle mode to OFF (optional)
                 appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
                     Log.e(TAG, "Set shuffle mode to OFF")
                 }
                 subscription?.cancel()
                 appRemote.playerApi.play(trackURI).setResultCallback { _ ->
-                    Log.i(TAG, "Start new song")
+                    //Log.i(TAG, "Start new song")
                     Handler().postDelayed({
                         subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
 
                             val track: Track = it.track
-                            Log.d(
-                                "PlaylistActivity",
-                                track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
-                            )
+                            //Log.d(
+                            //    "PlaylistActivity",
+                            //    track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                            // )
                             if (track.uri != trackURI) {
                                 // Song has changed, pause the player
                                 pausePlayer()
@@ -218,7 +219,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = true
             selectedSongs.add(song)
-            Log.i(TAG, "Song selected: ${song.title}")
+            //Log.i(TAG, "Song selected: ${song.title}")
         } else {
             view.setBackgroundColor(Color.TRANSPARENT)
 //            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
@@ -228,7 +229,7 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = false
             selectedSongs.remove(song)
-            Log.i(TAG, "Song deselected: ${song.title}")
+            //Log.i(TAG, "Song deselected: ${song.title}")
         }
 
     }

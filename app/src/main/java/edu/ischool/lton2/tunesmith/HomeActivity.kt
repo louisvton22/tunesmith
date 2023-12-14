@@ -187,15 +187,12 @@ class HomeActivity : AppCompatActivity(), NavBar {
             var tracks: JSONArray
             reader.use {
                 val json = JSONObject(it.readText())
-                Log.i(TAG, "recently played json: $json")
                 tracks = json.getJSONArray("items")
-                Log.i(TAG, "tracks : $tracks")
 
             }
             var recentSongs: MutableList<Song> = mutableListOf()
             for (i in 0 until tracks.length()) {
                 val track = tracks.getJSONObject(i).getJSONObject("track")
-                Log.i(TAG, "track name: ${track.getString("name")}")
 
                 var smallImageObj = track.getJSONObject("album")
                     .getJSONArray("images")
@@ -241,15 +238,12 @@ class HomeActivity : AppCompatActivity(), NavBar {
             reader = InputStreamReader(inputStream)
             reader.use {
                 val json = JSONObject(it.readText())
-                Log.i(TAG, "recommended json: $json")
                 tracks = json.getJSONArray("tracks")
-                Log.i(TAG, "tracks : $tracks")
 
             }
             recentSongs = mutableListOf()
             for (i in 0 until tracks.length()) {
                 val track = tracks.getJSONObject(i)
-                Log.i(TAG, "track name: ${track.getString("name")}")
                 var smallImageObj = track.getJSONObject("album")
                     .getJSONArray("images")
                     .getJSONObject(1)
