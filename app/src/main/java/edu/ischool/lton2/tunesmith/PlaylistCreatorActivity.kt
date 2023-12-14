@@ -15,6 +15,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.NumberPicker
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -31,7 +32,7 @@ class PlaylistCreatorActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_creator)
-
+        findViewById<TextView>(R.id.txtWarning).text = "WARNING: Use an image under 256KB"
         img = findViewById(R.id.imgPlaylist)
         name = findViewById(R.id.namePlaylist)
         description = findViewById(R.id.descriptionPlaylist)

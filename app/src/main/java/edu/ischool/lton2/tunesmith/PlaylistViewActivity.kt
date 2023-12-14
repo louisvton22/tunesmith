@@ -258,7 +258,7 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
                     val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
                     outputStreamWriter.write(encoded)
                     outputStreamWriter.flush()
-                    //Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
+                    Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
                     outputStreamWriter.close()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating image: ${e.message}")
