@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.view.MenuItemCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -48,7 +49,26 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     val networkThread = Executors.newSingleThreadExecutor()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        invalidateOptionsMenu()
         setContentView(R.layout.activity_search)
+        val btnGetRec  = findViewById<Button>(R.id.btnGetRec)
+        btnGetRec.text = "Get Recommended Songs"
+        btnGetRec.setOnLongClickListener {
+            Log.i(TAG, "get recs clicked")
+            if (selectedSongs.isNotEmpty()) {
+                val playlistIntent = Intent(this, PlaylistCreatorActivity::class.java)
+                val bundle = Bundle()
+                val trackSeeds = selectedSongs.map { song ->
+                    song.id.replace("spotify:track:", "")
+                }
+                bundle.putStringArrayList("Songs", ArrayList(trackSeeds))
+                playlistIntent.putExtras(bundle)
+                startActivity(playlistIntent)
+            } else {
+                Toast.makeText(this, "Select at least 1 song for recommendations", Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
 
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
@@ -112,17 +132,15 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             for (j in 1 until artistObj.length()) {
                 artistName += ", " + artistObj.getJSONObject(j).getString("name")
             }
-            Log.i(TAG, "artist: $artistName")
 
             var smallImageObj= track.getJSONObject("album")
                 .getJSONArray("images")
                 .getJSONObject(1)
-            Log.i(TAG, smallImageObj.getString("url"))
             val trackData = Song(
                 track.getString("name"),
                 artistName,
                 smallImageObj.getString("url"),
-                track.getInt("duration_ms").toString(),
+                track.getInt("duration_ms"),
                 "spotify:track:${track.getString("id")}",
                 false
             )
@@ -140,9 +158,9 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
     }
 
     override fun onSongClick(song: Song) {
-        Log.i(TAG, "song clicked")
-        Log.i(TAG, "${song.title} clicked")
-        Log.i(TAG, "$song click")
+//        Log.i(TAG, "song clicked")
+//        Log.i(TAG, "${song.title} clicked")
+//        Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
@@ -152,22 +170,22 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
             currentlyPlaying = song.title
             (application as SpotifyConnection).getConn()?.let { appRemote ->
                 val trackURI = song.id
-                Log.d("song id", trackURI)
+                //Log.d("song id", trackURI)
                 // Set shuffle mode to OFF (optional)
                 appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
                     Log.e(TAG, "Set shuffle mode to OFF")
                 }
                 subscription?.cancel()
                 appRemote.playerApi.play(trackURI).setResultCallback { _ ->
-                    Log.i(TAG, "Start new song")
+                    //Log.i(TAG, "Start new song")
                     Handler().postDelayed({
                         subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
 
                             val track: Track = it.track
-                            Log.d(
-                                "PlaylistActivity",
-                                track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
-                            )
+                            //Log.d(
+                            //    "PlaylistActivity",
+                            //    track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                            // )
                             if (track.uri != trackURI) {
                                 // Song has changed, pause the player
                                 pausePlayer()
@@ -180,6 +198,11 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        subscription?.cancel()
+    }
+
     //highlight songs selected to generate new playlist
     override fun onSongSelected(song: Song, view: View) {
         // select songs if they are not already in selected category
@@ -187,17 +210,26 @@ class SearchActivity : AppCompatActivity() , PlaylistAdapter.OnSongClickListener
         val ogBgColor = (view.rootView.background as ColorDrawable).color
         val ogTxtColor = this.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
         if (!selectedSongs.contains(song)) {
-            view.setBackgroundColor(Color.parseColor("#1DB954"))
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+//            view.setBackgroundColor(Color.parseColor("#1DB954"))
+            view.setBackgroundColor(Color.DKGRAY)
+//            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#191414"))
+//            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#191414"))
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.WHITE)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = true
             selectedSongs.add(song)
+            //Log.i(TAG, "Song selected: ${song.title}")
         } else {
-            view.setBackgroundColor(ogBgColor)
-            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
-            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            view.setBackgroundColor(Color.TRANSPARENT)
+//            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.parseColor("#80FFFFFF"))
+//            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.parseColor("#B3FFFFFF"))
+            view.findViewById<TextView>(R.id.songTitle).setTextColor(Color.GRAY)
+            view.findViewById<TextView>(R.id.songArtist).setTextColor(Color.LTGRAY)
+            view.findViewById<TextView>(R.id.songLength).setTextColor(Color.LTGRAY)
             song.selected = false
             selectedSongs.remove(song)
+            //Log.i(TAG, "Song deselected: ${song.title}")
         }
 
     }

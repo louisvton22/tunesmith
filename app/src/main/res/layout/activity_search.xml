@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -15,17 +16,32 @@
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:dividerHeight="10dp"
+        android:paddingTop="8dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="45dp"
+        android:paddingLeft="10dp"
+        app:layout_constraintTop_toBottomOf="@id/appbar"
+        app:layout_constraintBottom_toTopOf="@id/btnGetRec"
+        android:divider="@android:color/transparent"
+        android:layout_above="@id/bottomNavigationBar"
+
+        />
+
+    <Button
+        android:id="@+id/btnGetRec"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp"
-        android:padding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/appbar"/>
+        android:text="Button"
+        android:layout_above="@id/bottomNavigationBar"
+        android:layout_centerHorizontal="true" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        app:menu="@menu/bottom_nav_bar" />
+        android:layout_alignParentBottom="true"
+    app:menu="@menu/bottom_nav_bar" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>

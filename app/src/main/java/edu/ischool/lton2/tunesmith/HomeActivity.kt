@@ -1,6 +1,7 @@
 package edu.ischool.lton2.tunesmith
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -56,12 +57,12 @@ class HomeActivity : AppCompatActivity(), NavBar {
         var recyclerView = findViewById<RecyclerView>(R.id.recHistory)
         var layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf())
+        recyclerView.adapter = SongAdapter(listOf(), this)
 
         recyclerView = findViewById<RecyclerView>(R.id.recRecommends)
         layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf())
+        recyclerView.adapter = SongAdapter(listOf(), this)
 
         var builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
             spotifyConnection.clientId,
@@ -75,7 +76,10 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 "user-read-private",
                 "playlist-read",
                 "playlist-read-private",
-                "user-read-recently-played"
+                "user-read-recently-played",
+                "playlist-modify-public",
+                "playlist-modify-private",
+                "ugc-image-upload"
             )
         )
 
@@ -142,6 +146,8 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 with(sharedPref.edit()) {
                     putString("User", user["display_name"].toString())
                     Log.i(TAG, "Added display name to shared preferences")
+                    putString("UserID", user["id"].toString())
+                    Log.i(TAG, "Added spotify id name to shared preferences")
                     apply()
                 }
 
@@ -162,98 +168,108 @@ class HomeActivity : AppCompatActivity(), NavBar {
 
     // Set up home screen for TuneSmith
     fun setupHomeUI() {
+
+        try {
             var apiUrl = URL("https://api.spotify.com/v1/me/player/recently-played?limit=5")
             // val headers = mapOf("Authorization" to "Bearer $accessToken")
 
             var urlConnection = apiUrl.openConnection() as HttpURLConnection
             Log.d(TAG, "Bearer ${sharedPref.getString("AccessToken", "")}")
             Log.i(TAG, "requesting listening history details")
-            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+            urlConnection.setRequestProperty(
+                "Authorization",
+                "Bearer ${sharedPref.getString("AccessToken", "")}"
+            )
 
             var inputStream = urlConnection.inputStream
 
-            var reader  = InputStreamReader(inputStream)
+            var reader = InputStreamReader(inputStream)
             var tracks: JSONArray
             reader.use {
                 val json = JSONObject(it.readText())
-                Log.i(TAG, "recently played json: $json")
                 tracks = json.getJSONArray("items")
-                Log.i(TAG, "tracks : $tracks")
 
             }
-                var recentSongs: MutableList<Song> = mutableListOf()
-                for (i in 0 until tracks.length()) {
-                    val track = tracks.getJSONObject(i).getJSONObject("track")
-                    Log.i(TAG, "track name: ${track.getString("name")}")
+            var recentSongs: MutableList<Song> = mutableListOf()
+            for (i in 0 until tracks.length()) {
+                val track = tracks.getJSONObject(i).getJSONObject("track")
 
-                    var smallImageObj= track.getJSONObject("album")
-                        .getJSONArray("images")
-                        .getJSONObject(1)
-                    val song = Song(
-                        track.getString("name"),
-                        track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                        track.getString("id"),
-                        smallImageObj.getString("url")
-                    )
-                    recentSongs.add(song)
+                var smallImageObj = track.getJSONObject("album")
+                    .getJSONArray("images")
+                    .getJSONObject(1)
+                val song = Song(
+                    track.getString("name"),
+                    track.getJSONArray("artists").getJSONObject(0).getString("name"),
+                    track.getString("id"),
+                    smallImageObj.getString("url")
+                )
+                recentSongs.add(song)
 
-                }
+            }
 
             // inflate listen history carousel
             this.runOnUiThread {
                 Log.i(TAG, "inflating history carousel")
-                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs, this)
             }
 
             // inflate recommended songs carousel
 
             // get list of seed tracks
-            val seedArtists = recentSongs.joinToString(separator = ",") {element ->
+            val seedArtists = recentSongs.joinToString(separator = ",") { element ->
                 element.trackId
             }
             Log.i(TAG, "$seedArtists")
-            val recUrl = URL("https://api.spotify.com/v1/recommendations?limit=5&" +
-                    "seed_tracks=$seedArtists")
+            val recUrl = URL(
+                "https://api.spotify.com/v1/recommendations?limit=5&" +
+                        "seed_tracks=$seedArtists"
+            )
             urlConnection.disconnect()
             urlConnection = recUrl.openConnection() as HttpURLConnection
             Log.i(TAG, "requesting recommended details")
-            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
-
-            inputStream = urlConnection.inputStream
-            reader  = InputStreamReader(inputStream)
-            reader.use {
-            val json = JSONObject(it.readText())
-            Log.i(TAG, "recommended json: $json")
-            tracks = json.getJSONArray("tracks")
-            Log.i(TAG, "tracks : $tracks")
-
-        }
-        recentSongs = mutableListOf()
-        for (i in 0 until tracks.length()) {
-            val track = tracks.getJSONObject(i)
-            Log.i(TAG, "track name: ${track.getString("name")}")
-            var smallImageObj= track.getJSONObject("album")
-                .getJSONArray("images")
-                .getJSONObject(1)
-            val song = Song(
-                track.getString("name"),
-                track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                track.getString("id"),
-                smallImageObj.getString("url")
+            urlConnection.setRequestProperty(
+                "Authorization",
+                "Bearer ${sharedPref.getString("AccessToken", "")}"
             )
-            recentSongs.add(song)
 
-        }
+            Log.i(TAG, "${urlConnection.responseCode} ${urlConnection.getHeaderField("Retry-After")}")
+            inputStream = urlConnection.inputStream
+
+            reader = InputStreamReader(inputStream)
+            reader.use {
+                val json = JSONObject(it.readText())
+                tracks = json.getJSONArray("tracks")
+
+            }
+            recentSongs = mutableListOf()
+            for (i in 0 until tracks.length()) {
+                val track = tracks.getJSONObject(i)
+                var smallImageObj = track.getJSONObject("album")
+                    .getJSONArray("images")
+                    .getJSONObject(1)
+                val song = Song(
+                    track.getString("name"),
+                    track.getJSONArray("artists").getJSONObject(0).getString("name"),
+                    track.getString("id"),
+                    smallImageObj.getString("url")
+                )
+                recentSongs.add(song)
+
+            }
             this.runOnUiThread {
                 findViewById<TextView>(R.id.txtRec).text =
                     "Recommended songs based on your listening history"
                 findViewById<TextView>(R.id.txtRec).visibility = View.VISIBLE
                 Log.i(TAG, "inflating recommended carousel")
-                findViewById<RecyclerView>(R.id.recRecommends).adapter = SongAdapter(recentSongs)
+                findViewById<RecyclerView>(R.id.recRecommends).adapter =
+                    SongAdapter(recentSongs, this)
             }
+        } catch(e: Exception) {
+            Log.e(TAG, "Error on network thread: $e ${e.message}")
+        }
     }
 
-    class SongAdapter(private val songs: List<Song>) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
+    class SongAdapter(private val songs: List<Song>, private val context: Activity) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
         class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val textTitle: TextView = itemView.findViewById(R.id.textTitle)
             val textArtist: TextView = itemView.findViewById(R.id.textArtist)
@@ -275,7 +291,10 @@ class HomeActivity : AppCompatActivity(), NavBar {
             networkThread.execute{
                 try {
                     image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
-                    holder.image.setImageBitmap(image)
+                    this.context.runOnUiThread {
+                        holder.image.setImageBitmap(image)
+                    }
+
                 } catch(e: Exception) {
                     Log.e("PlaylistAdapter", e.toString())
                 }
