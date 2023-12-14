@@ -3,6 +3,7 @@ package edu.ischool.lton2.tunesmith
 import android.app.Person
 import android.content.ContentValues.TAG
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
@@ -20,6 +21,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
@@ -181,7 +183,8 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
     }
 
     private fun addSongs() {
-        val apiUrl = URL("https://api.spotify.com/v1/playlists/${playlistId}/tracks")
+        val songSpotifyURIs = recSongs.map { it.id }.joinToString(",")
+        val apiUrl = URL("https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=$songSpotifyURIs")
         try {
             val urlConnection = apiUrl.openConnection() as HttpURLConnection
 
@@ -217,6 +220,10 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             }
 
             // give success message
+            this.runOnUiThread {
+                Toast.makeText(this, "Playlist Added!", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, HomeActivity::class.java))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error on network thread ${e.message}")
         }
