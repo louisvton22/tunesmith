@@ -1,41 +1,273 @@
 package edu.ischool.lton2.tunesmith
 
-import android.content.ContentValues.TAG
+import android.R.attr
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Parcel
+import android.os.Parcelable
+import android.util.Base64
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.BaseAdapter
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import com.spotify.protocol.types.Track
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
+
 
 class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSongClickListener { //?
     private val TAG = "PlaylistActivity"
     private var currentlyPlaying = ""
     private var subscription:Subscription<PlayerState>? = null
+    lateinit var sharedPref : SharedPreferences
+    lateinit var recSongs: MutableList<Song>
+    var playlistId: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.playlist_view)
+        sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
+        //this.setupNav(this, R.id.nav_search)
 
-        this.setupNav(this, R.id.nav_search)
-        val listView = findViewById<ListView>(R.id.list_view)
+        val btnUpload = findViewById<Button>(R.id.btnUpload)
+        btnUpload.text = "Upload Playlist to Spotify"
+        btnUpload.setOnLongClickListener{
+            uploadPlaylist()
+            true}
 
-        val playlistAdapter = PlaylistAdapter(playlistExample.songs, this)
+        // inflate playlist with user title, image, and desc
+        inflatePlaylist()
 
-        listView.adapter = playlistAdapter
+        recSongs = mutableListOf()
+        //get recommended songs
+        var seedSongs = intent.extras?.getStringArrayList("Songs")?.toMutableList()
+        Log.i(TAG, seedSongs.toString())
+        Executors.newSingleThreadExecutor().execute {
+            val seedArtists = seedSongs?.joinToString(separator = ",")
+            Log.i(TAG, "$seedArtists")
+            val recUrl = URL("https://api.spotify.com/v1/recommendations?limit=${intent.extras?.getInt("nSongs")}&" +
+                    "seed_tracks=$seedArtists")
+            val urlConnection = recUrl.openConnection() as HttpURLConnection
+            Log.i(TAG, "requesting recommended details")
+            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
 
+            val inputStream = urlConnection.inputStream
+            val reader  = InputStreamReader(inputStream)
+            var tracks:JSONArray
+            reader.use {
+                val json = JSONObject(it.readText())
+                Log.i(TAG, "recommended json: $json")
+                tracks = json.getJSONArray("tracks")
+                Log.i(TAG, "tracks : $tracks")
+
+            }
+            recSongs = mutableListOf()
+            for (i in 0 until tracks.length()) {
+                val track = tracks.getJSONObject(i)
+                //Log.i(TAG, "track name: ${track.getString("name")}")
+                val artistObj = track.getJSONArray("artists")
+
+                var artistName = artistObj.getJSONObject(0).getString("name")
+                for (j in 1 until artistObj.length()) {
+                    artistName += ", " + artistObj.getJSONObject(j).getString("name")
+                }
+                //Log.i(TAG, "artist: $artistName")
+
+                var smallImageObj= track.getJSONObject("album")
+                    .getJSONArray("images")
+                    .getJSONObject(2)
+                //Log.i(TAG, smallImageObj.getString("url"))
+                val trackData = Song(
+                    track.getString("name"),
+                    artistName,
+                    smallImageObj.getString("url"),
+                    track.getInt("duration_ms"),
+                    "spotify:track:${track.getString("id")}",
+                    false
+                )
+                recSongs.add(trackData)
+
+            }
+            this.runOnUiThread {
+                Log.i(TAG, "Inflating listview")
+                val listView = findViewById<ListView>(R.id.list_view)
+
+                val playlistAdapter = PlaylistAdapter(recSongs, this)
+
+                listView.adapter = playlistAdapter
+            }
+        }
     }
 
+    fun inflatePlaylist() {
 
+        val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+        if (playlist?.image?.isNotEmpty()!!) {
+            val imageFile = File(playlist?.image)
+            findViewById<ImageView>(R.id.imgTV).setImageURI(Uri.fromFile(imageFile))
+        }
+        findViewById<TextView>(R.id.titleTV).text = playlist?.name
+        findViewById<TextView>(R.id.descriptionTV).text = playlist?.description
+    }
+
+    fun uploadPlaylist() {
+        val apiUrl = URL("https://api.spotify.com/v1/users/${sharedPref.getString("UserID", "")}/playlists")
+        //Log.i(TAG, "$apiUrl")
+        //Log.i(TAG, "shared preferences userid: ${sharedPref.getString("UserID", "")}")
+        //Log.i(TAG, "shared prefs token: ${sharedPref.getString("AccessToken", "")}")
+        Executors.newSingleThreadExecutor().execute {
+            try {
+                val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+                urlConnection.requestMethod = "POST"
+                urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+                urlConnection.setRequestProperty("Content-Type", "application/json")
+                urlConnection.setRequestProperty("Accept", "application/json")
+                urlConnection.setRequestProperty("charset", "utf-8")
+
+                urlConnection.doInput = true
+                urlConnection.doOutput = true
+
+                val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+                val postJson = JSONObject()
+                postJson.put("name",playlist?.name)
+                postJson.put("description", playlist?.description)
+                postJson.put("public", false)
+                //Log.i(TAG, "Json $postJson")
+
+                val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+                outputStreamWriter.write(postJson.toString())
+                outputStreamWriter.flush()
+
+                //Log.i(TAG, "${urlConnection.responseCode}")
+                val inputStream = urlConnection.inputStream
+                //Log.i(TAG, "request success")
+                val reader = InputStreamReader(inputStream)
+                reader.use {
+                    val respJson = JSONObject(it.readText())
+                    Log.i(TAG, "json : $respJson")
+                    playlistId = respJson.getString("id")
+                    Log.i(TAG, "Playlist id: $playlistId")
+                }
+
+                //Log.i(TAG, "Adding songs to playlist")
+                // add songs to the playlist
+                addSongs()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error on network thread")
+            }
+        }
+    }
+
+    private fun addSongs() {
+        val songSpotifyURIs = recSongs.map { it.id }.joinToString(",")
+        val apiUrl = URL("https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=$songSpotifyURIs")
+        try {
+            val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+            urlConnection.requestMethod = "POST"
+            urlConnection.setRequestProperty("Authorization", "Bearer ${sharedPref.getString("AccessToken", "")}")
+            urlConnection.setRequestProperty("Content-Type", "application/json")
+            urlConnection.setRequestProperty("Accept", "application/json")
+            urlConnection.setRequestProperty("charset", "utf-8")
+
+            urlConnection.doInput = true
+            urlConnection.doOutput = true
+
+            val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+            val postJson = JSONObject()
+            val songUris = recSongs.map { song ->
+                song.id.replace("spotify:track:", "")
+            }
+            //Log.i(TAG, "Json ${JSONArray(songUris)}")
+            postJson.put("uris", JSONArray(songUris))
+            //Log.i(TAG, "$postJson")
+
+            val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+            outputStreamWriter.write(postJson.toString())
+            outputStreamWriter.flush()
+
+            //Log.i(TAG, "${urlConnection.responseCode}")
+            val inputStream = urlConnection.inputStream
+           // Log.i(TAG, "request success")
+            val reader = InputStreamReader(inputStream)
+            reader.use {
+                val respJson = JSONObject(it.readText())
+                //Log.i(TAG, "response json: $respJson")
+            }
+            replaceImage()
+            // give success message
+            this.runOnUiThread {
+                Toast.makeText(this, "Playlist Added!", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, HomeActivity::class.java))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error on network thread ${e.message}")
+        }
+    }
+
+    private fun replaceImage() {
+
+            val apiUrl = URL("https://api.spotify.com/v1/playlists/$playlistId/images")
+            val playlist = intent.extras?.getParcelable<Playlist>("Playlist")
+            if (playlist?.image?.isNotEmpty()!!) {
+                Log.i(TAG, "Custom image detected, updating playlist image on Spotify")
+                try {
+                    val urlConnection = apiUrl.openConnection() as HttpURLConnection
+
+                    urlConnection.requestMethod = "PUT"
+                    urlConnection.setRequestProperty(
+                        "Authorization",
+                        "Bearer ${sharedPref.getString("AccessToken", "")}"
+                    )
+                    urlConnection.setRequestProperty("Content-Type", "image/jpeg")
+                    urlConnection.doOutput = true
+                    //Log.i(TAG, "REquest body: ${}")
+                    //val imageBytes = Files.readAllBytes(Paths.get(playlist?.image))
+                    //val encodedImage = Base64.getEncoder().encodeToString(imageBytes)
+                    //Log.i(TAG, playlist?.image)
+                    val bitmap = BitmapFactory.decodeFile(playlist?.image)
+                    val byteArrayOutputStream = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+                    val byteArray = byteArrayOutputStream.toByteArray()
+                    var encoded = Base64.encodeToString(byteArray, Base64.DEFAULT)
+                    encoded = encoded.replace("\n", "").replace("\r", "")
+                    //Log.i(TAG, encoded)
+
+                    val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
+                    outputStreamWriter.write(encoded)
+                    outputStreamWriter.flush()
+                    Log.i(TAG, "response after updating image: ${urlConnection.responseCode}, ${urlConnection.responseMessage}")
+                    outputStreamWriter.close()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating image: ${e.message}")
+                }
+            }
+    }
     override fun onSongClick(song: Song) {
-        Log.i(TAG, "${song.title} clicked")
-        Log.i(TAG, "$song click")
+        //Log.i(TAG, "${song.title} clicked")
+        //Log.i(TAG, "$song click")
 
         if(currentlyPlaying == song.title) {
             // song currently playing, pause the song
@@ -45,28 +277,28 @@ class PlaylistViewActivity : AppCompatActivity(), NavBar,  PlaylistAdapter.OnSon
             currentlyPlaying = song.title
         (application as SpotifyConnection).getConn()?.let { appRemote ->
             val trackURI = song.id
-            Log.d("song id", trackURI)
+            //Log.d("song id", trackURI)
             // Set shuffle mode to OFF (optional)
             appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
                 Log.e(TAG, "Set shuffle mode to OFF")
             }
             subscription?.cancel()
             appRemote.playerApi.play(trackURI).setResultCallback { _ ->
-                Log.i(TAG, "Start new song")
+                //Log.i(TAG, "Start new song")
                 Handler().postDelayed({
                     subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
 
                         val track: Track = it.track
-                        Log.d(
-                            "PlaylistActivity",
-                            track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
-                        )
+                        //Log.d(
+                        //    "PlaylistActivity",
+                        //    track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                        //)
                         if (track.uri != trackURI) {
                             // Song has changed, pause the player
                             pausePlayer()
                         }
                     }
-                }, 500)
+                }, 700)
             }
 
         }
@@ -89,13 +321,43 @@ data class Playlist(
     val description: String,
     val image: String,
     val songs: List<Song>
+    ) : Parcelable {
+
+     constructor(parcel: Parcel) : this (
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        mutableListOf<Song>().apply {
+            parcel.readList(this, Song::class.java.classLoader)
+        }
     )
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(name)
+        dest.writeString(description)
+        dest.writeString(image)
+    }
+
+    companion object CREATOR : Parcelable.Creator<Playlist> {
+        override fun createFromParcel(source: Parcel): Playlist {
+            return Playlist(source)
+        }
+
+        override fun newArray(size: Int): Array<Playlist?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 
 data class Song(
     val title: String,
     val artist: String,
     val cover: String,
-    val length: String,
+    val length: Int,
     val id: String,
     var selected: Boolean //determines whether the song should be highlighted or not
     )
@@ -105,7 +367,7 @@ val example  = listOf<Song>(
         "song1",
         "artist1",
         "image1",
-        "length1",
+        20000,
         "spotify:track:0T7aTl1t15HKHfwep4nANV",
         false
     ),
@@ -113,7 +375,7 @@ val example  = listOf<Song>(
         "song2",
         "artist2",
         "image2",
-        "length2",
+        400000,
         "spotify:track:3xIMkM5LgbVDkpO74O3Np3",
         false
     ),
@@ -121,7 +383,7 @@ val example  = listOf<Song>(
         "Bounce",
         "Emotional Oranges",
         "image3",
-        "length3",
+        50000,
         "spotify:track:3qptm6j356NV9FOJri6OgZ",
         false
     )

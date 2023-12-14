@@ -20,6 +20,13 @@
         android:layout_marginBottom="20dp"/>
 
     <TextView
+        android:id="@+id/txtWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:textAlignment="center" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Name your playlist"
@@ -47,12 +54,34 @@
         android:layout_height="50dp"
         android:singleLine="true"
         android:layout_margin="20dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="234dp"
+            android:layout_height="52dp"
+            android:layout_gravity="center"
+            android:gravity="center_vertical"
+            android:text="Limit the number of songs in your playlist"
+            android:textStyle="bold" />
+
+        <NumberPicker
+            android:id="@+id/numberPicker"
+            android:layout_width="wrap_content"
+            android:layout_height="150dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/createPlaylist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Create"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="20dp" />
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>
