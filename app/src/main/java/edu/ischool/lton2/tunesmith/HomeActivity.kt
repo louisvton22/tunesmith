@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +21,9 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.spotify.protocol.client.Subscription
+import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Track
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
@@ -33,7 +37,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 
-class HomeActivity : AppCompatActivity(), NavBar {
+class HomeActivity : AppCompatActivity(), NavBar, SongAdapter.OnSongClickListener {
     lateinit var spotifyConnection: SpotifyConnection
     private val TAG = "HomeActivity"
     private val REQUEST_CODE = 1337
@@ -42,8 +46,9 @@ class HomeActivity : AppCompatActivity(), NavBar {
     val networkThread = Executors.newSingleThreadExecutor()
     lateinit var user: JSONObject
     lateinit var sharedPref: SharedPreferences
+    var subscription: Subscription<PlayerState>? = null
 
-    lateinit var bottomNav : BottomNavigationView
+    var currentlyPlaying = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         spotifyConnection = (application as SpotifyConnection)
         sharedPref = getSharedPreferences("SpotifyPrefs", Context.MODE_PRIVATE)
@@ -57,12 +62,12 @@ class HomeActivity : AppCompatActivity(), NavBar {
         var recyclerView = findViewById<RecyclerView>(R.id.recHistory)
         var layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf(), this)
+        recyclerView.adapter = SongAdapter(listOf(), this, this)
 
         recyclerView = findViewById<RecyclerView>(R.id.recRecommends)
         layoutManager = GridLayoutManager(this, 1,  LinearLayoutManager.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = SongAdapter(listOf(), this)
+        recyclerView.adapter = SongAdapter(listOf(), this, this)
 
         var builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
             spotifyConnection.clientId,
@@ -200,7 +205,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 val song = Song(
                     track.getString("name"),
                     track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                    track.getString("id"),
+                    "spotify:track:${track.getString("id")}",
                     smallImageObj.getString("url")
                 )
                 recentSongs.add(song)
@@ -210,14 +215,14 @@ class HomeActivity : AppCompatActivity(), NavBar {
             // inflate listen history carousel
             this.runOnUiThread {
                 Log.i(TAG, "inflating history carousel")
-                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs, this)
+                findViewById<RecyclerView>(R.id.recHistory).adapter = SongAdapter(recentSongs, this, this)
             }
 
             // inflate recommended songs carousel
 
             // get list of seed tracks
             val seedArtists = recentSongs.joinToString(separator = ",") { element ->
-                element.trackId
+                element.trackId.replace("spotify:track:", "")
             }
             Log.i(TAG, "$seedArtists")
             val recUrl = URL(
@@ -250,7 +255,7 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 val song = Song(
                     track.getString("name"),
                     track.getJSONArray("artists").getJSONObject(0).getString("name"),
-                    track.getString("id"),
+                    "spotify:track:${track.getString("id")}",
                     smallImageObj.getString("url")
                 )
                 recentSongs.add(song)
@@ -262,46 +267,59 @@ class HomeActivity : AppCompatActivity(), NavBar {
                 findViewById<TextView>(R.id.txtRec).visibility = View.VISIBLE
                 Log.i(TAG, "inflating recommended carousel")
                 findViewById<RecyclerView>(R.id.recRecommends).adapter =
-                    SongAdapter(recentSongs, this)
+                    SongAdapter(recentSongs, this, this)
             }
         } catch(e: Exception) {
             Log.e(TAG, "Error on network thread: $e ${e.message}")
         }
     }
+    override fun onSongClick(song: Song): Unit {
+//        Log.i(TAG, "song clicked")
+//        Log.i(TAG, "${song.title} clicked")
+//        Log.i(TAG, "$song click")
 
-    class SongAdapter(private val songs: List<Song>, private val context: Activity) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
-        class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val textTitle: TextView = itemView.findViewById(R.id.textTitle)
-            val textArtist: TextView = itemView.findViewById(R.id.textArtist)
-            val image = itemView.findViewById<ImageView>(R.id.trackCover)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_song, parent, false)
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val song = songs[position]
-            holder.textArtist.text = song.artists
-            holder.textTitle.text = song.name
-            val imgURL = URL(song.cover)
-            var image: Bitmap
-            val networkThread = Executors.newSingleThreadExecutor() // is it ok to make another one?
-            networkThread.execute{
-                try {
-                    image = BitmapFactory.decodeStream(imgURL.openConnection().getInputStream())
-                    this.context.runOnUiThread {
-                        holder.image.setImageBitmap(image)
-                    }
-
-                } catch(e: Exception) {
-                    Log.e("PlaylistAdapter", e.toString())
+        if(currentlyPlaying == song.name) {
+            // song currently playing, pause the song
+            pausePlayer()
+            currentlyPlaying = ""
+        } else {
+            currentlyPlaying = song.name
+            (application as SpotifyConnection).getConn()?.let { appRemote ->
+                val trackURI = song.trackId
+                Log.d("song id", trackURI)
+                // Set shuffle mode to OFF (optional)
+                appRemote.playerApi.setShuffle(false).setResultCallback { _ ->
+                    Log.e(TAG, "Set shuffle mode to OFF")
                 }
+                subscription?.cancel()
+                appRemote.playerApi.play(trackURI).setResultCallback { _ ->
+                    //Log.i(TAG, "Start new song")
+                    Handler().postDelayed({
+                        subscription = appRemote.playerApi.subscribeToPlayerState().setEventCallback {
+
+                            val track: Track = it.track
+                            //Log.d(
+                            //    "PlaylistActivity",
+                            //    track.name + " by " + track.artist.name + " track id: ${track.uri} song selected: $trackURI"
+                            // )
+                            if (track.uri != trackURI) {
+                                // Song has changed, pause the player
+                                pausePlayer()
+                            }
+                        }
+                    }, 500)
+                }
+
             }
         }
-        override fun getItemCount(): Int {
-            return songs.size
-        }
     }
+    private fun pausePlayer() {
+        (application as SpotifyConnection).getConn()?.let { appRemote ->
+            appRemote.playerApi.pause().setResultCallback { _ ->
+                Log.e(TAG, "Paused playback after one song")
+            }
+        }
+        subscription?.cancel()
+    }
+
 }

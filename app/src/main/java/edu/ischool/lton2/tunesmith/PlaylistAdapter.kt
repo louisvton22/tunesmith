@@ -17,7 +17,6 @@ import android.widget.TextView
 import java.net.URL
 import java.util.concurrent.Executors
 
-
 class PlaylistAdapter(private val context: Activity, private val songs: List<Song>, private val onSongClickListener: OnSongClickListener) : BaseAdapter() {
     val networkThread = Executors.newSingleThreadExecutor()
     interface OnSongClickListener {
